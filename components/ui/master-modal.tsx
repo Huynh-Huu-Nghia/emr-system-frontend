@@ -7,7 +7,6 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
   DialogPortal,
   DialogOverlay,

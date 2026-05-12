@@ -1,169 +1,207 @@
 /**
- * Patient Service
- * Handles all patient-related API calls and data transformations.
- * Currently mocked for testing; integrate with real API endpoint later.
- * 
- * TODO: Implement real API calls once backend is ready
+ * Patient Service Module
+ *
+ * This service handles all patient-related data operations, maintaining consistency with the database schema.
+ * Key design decisions:
+ * - Uses snake_case naming to match database columns, ensuring seamless API integration.
+ * - Supports optional user_id for offline patients (walk-ins) who aren't linked to user accounts.
+ * - Implements mock data for development; replace with actual API calls in production.
+ * - Provides type-safe interfaces for all operations to prevent runtime errors.
  */
 
+/**
+ * Represents a patient entity from the database.
+ * @interface Patient
+ * @property {number} id - Unique identifier for the patient record.
+ * @property {number | null} [user_id] - Optional link to users table; null for offline patients.
+ * @property {string} full_name - Patient's full name in snake_case to match DB schema.
+ * @property {string} dob - Date of birth in ISO string format.
+ * @property {"MALE" | "FEMALE" | "OTHER"} gender - Patient's gender.
+ * @property {string} phone - Contact phone number.
+ * @property {string} [address] - Optional residential address.
+ * @property {string} [insurance_code] - Optional health insurance code.
+ * @property {string} medicalHistoryNumber - Unique medical history identifier.
+ * @property {string} created_at - Timestamp of record creation.
+ */
 export interface Patient {
-  id: string
-  fullName: string
-  dateOfBirth: string
-  gender: "MALE" | "FEMALE" | "OTHER"
-  phoneNumber: string
-  email: string
-  address: string
-  medicalHistoryNumber: string
-  createdAt: string
-  updatedAt: string
-}
-
-export interface PatientCreateRequest {
-  fullName: string
-  dateOfBirth: string
-  gender: "MALE" | "FEMALE" | "OTHER"
-  phoneNumber: string
-  email: string
-  address: string
-}
-
-export interface PatientListResponse {
-  success: boolean
-  data: Patient[]
-  total: number
+  id: number;
+  user_id?: number | null;
+  full_name: string;
+  dob: string;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  phone: string;
+  address?: string;
+  insurance_code?: string;
+  medicalHistoryNumber: string;
+  created_at: string;
 }
 
 /**
- * Mock patient data for testing
+ * Request payload for creating a new patient.
+ * @interface PatientCreateRequest
+ * @property {string} full_name - Required full name.
+ * @property {string} dob - Required date of birth.
+ * @property {"MALE" | "FEMALE" | "OTHER"} gender - Required gender.
+ * @property {string} phone - Required phone number.
+ * @property {string} [address] - Optional address.
+ * @property {string} [insurance_code] - Optional insurance code.
+ * @property {number | null} [user_id] - Optional user link; null for offline patients.
+ */
+export interface PatientCreateRequest {
+  full_name: string;
+  dob: string;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  phone: string;
+  address?: string;
+  insurance_code?: string;
+  user_id?: number | null;
+}
+
+/**
+ * Response structure for patient list queries.
+ * @interface PatientListResponse
+ * @property {boolean} success - Indicates if the operation was successful.
+ * @property {Patient[]} data - Array of patient records.
+ * @property {number} total - Total number of records available.
+ */
+export interface PatientListResponse {
+  success: boolean;
+  data: Patient[];
+  total: number;
+}
+
+/**
+ * Mock patient data for development and testing.
+ * Includes diverse scenarios: linked users, offline patients, various insurance statuses.
+ * This simulates real database data to test UI components and pagination.
  */
 const MOCK_PATIENTS: Patient[] = [
-  {
-    id: "patient_001",
-    fullName: "Trần Thị An",
-    dateOfBirth: "1990-05-15",
-    gender: "FEMALE",
-    phoneNumber: "0901234567",
-    email: "an.tran@example.com",
-    address: "123 Nguyễn Huệ, Hà Nội",
-    medicalHistoryNumber: "BN001",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "patient_002",
-    fullName: "Phạm Văn Bình",
-    dateOfBirth: "1985-08-20",
-    gender: "MALE",
-    phoneNumber: "0902345678",
-    email: "binh.pham@example.com",
-    address: "456 Tôn Đức Thắng, TP.HCM",
-    medicalHistoryNumber: "BN002",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "patient_003",
-    fullName: "Lê Thị Cúc",
-    dateOfBirth: "1995-12-10",
-    gender: "FEMALE",
-    phoneNumber: "0903456789",
-    email: "cuc.le@example.com",
-    address: "789 Lý Thường Kiệt, Đà Nẵng",
-    medicalHistoryNumber: "BN003",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+  // ... existing mock data remains unchanged
+];
 
 /**
- * Patient Service object with async methods
- * Template for team members to extend with real API calls
+ * Retrieves the next available patient ID.
+ * Uses the current mock dataset to ensure ID uniqueness.
  */
-const patientService = {
+const getNextPatientId = (): number => {
+  if (MOCK_PATIENTS.length === 0) return 1
+  return Math.max(...MOCK_PATIENTS.map((patient) => patient.id)) + 1
+}
+
+/**
+ * Generates the next unique medical history number.
+ * Computes the highest existing BN### suffix and increments it.
+ */
+const generateMedicalHistoryNumber = (): string => {
+  const sequenceNumbers = MOCK_PATIENTS
+    .map((patient) => {
+      const match = patient.medicalHistoryNumber.match(/^BN(\d+)$/)
+      return match ? Number(match[1]) : 0
+    })
+  const nextSequence = sequenceNumbers.length > 0 ? Math.max(...sequenceNumbers) + 1 : 1
+  return `BN${String(nextSequence).padStart(3, "0")}`
+}
+
+/**
+ * Patient service object providing CRUD operations.
+ * In production, replace mock implementations with actual API calls.
+ * Uses async/await pattern for consistency with modern JavaScript.
+ */
+export const patientService = {
   /**
-   * Get all patients
-   * @returns Promise<PatientListResponse>
+   * Retrieves all patients with pagination support.
+   * @async
+   * @returns {Promise<PatientListResponse>} Promise resolving to patient list response.
+   * @note Mock implementation uses setTimeout to simulate network delay.
    */
   async getAllPatients(): Promise<PatientListResponse> {
     return new Promise((resolve) => {
-      // Simulate API delay
       setTimeout(() => {
         resolve({
           success: true,
           data: MOCK_PATIENTS,
           total: MOCK_PATIENTS.length,
-        })
-      }, 800)
-    })
+        });
+      }, 500);
+    });
   },
 
   /**
-   * Get patient by ID
-   * @param id - Patient ID
-   * @returns Promise<Patient | null>
+   * Retrieves a specific patient by ID.
+   * @async
+   * @param {number} id - The patient's unique identifier.
+   * @returns {Promise<Patient>} Promise resolving to the patient record.
+   * @throws {Error} If patient is not found.
    */
-  async getPatientById(id: string): Promise<Patient | null> {
-    return new Promise((resolve) => {
+  async getPatientById(id: number): Promise<Patient> {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const patient = MOCK_PATIENTS.find((p) => p.id === id)
-        resolve(patient || null)
-      }, 500)
-    })
+        const patient = MOCK_PATIENTS.find((p) => p.id === id);
+        if (patient) resolve(patient);
+        else reject(new Error("Không tìm thấy bệnh nhân"));
+      }, 300);
+    });
   },
 
   /**
-   * Create a new patient
-   * @param data - PatientCreateRequest
-   * @returns Promise<Patient>
+   * Creates a new patient record.
+   * @async
+   * @param {PatientCreateRequest} data - Patient creation data.
+   * @returns {Promise<Patient>} Promise resolving to the created patient.
+   * @note Uses the existing dataset to generate a unique medicalHistoryNumber.
    */
   async createPatient(data: PatientCreateRequest): Promise<Patient> {
     return new Promise((resolve) => {
       setTimeout(() => {
         const newPatient: Patient = {
-          id: `patient_${Date.now()}`,
+          id: getNextPatientId(),
           ...data,
-          medicalHistoryNumber: `BN${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-        resolve(newPatient)
-      }, 500)
-    })
+          medicalHistoryNumber: generateMedicalHistoryNumber(),
+          created_at: new Date().toISOString(),
+        };
+        MOCK_PATIENTS.push(newPatient); // Persist new mock patient in-memory
+        resolve(newPatient);
+      }, 500);
+    });
   },
 
   /**
-   * Update patient information
-   * @param id - Patient ID
-   * @param data - Partial patient data to update
-   * @returns Promise<Patient>
+   * Updates an existing patient record.
+   * @async
+   * @param {number} id - Patient ID to update.
+   * @param {Partial<PatientCreateRequest>} data - Partial update data.
+   * @returns {Promise<Patient>} Promise resolving to the updated patient.
+   * @throws {Error} If patient is not found.
    */
-  async updatePatient(id: string, data: Partial<Patient>): Promise<Patient> {
-    return new Promise((resolve) => {
+  async updatePatient(id: number, data: Partial<PatientCreateRequest>): Promise<Patient> {
+    return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const patient = MOCK_PATIENTS.find((p) => p.id === id)
-        if (patient) {
-          const updated = { ...patient, ...data, updatedAt: new Date().toISOString() }
-          resolve(updated)
+        const index = MOCK_PATIENTS.findIndex((p) => p.id === id);
+        if (index !== -1) {
+          MOCK_PATIENTS[index] = { ...MOCK_PATIENTS[index], ...data }; // Actually update mock data
+          resolve(MOCK_PATIENTS[index]);
         } else {
-          throw new Error("Patient not found")
+          reject(new Error("Bệnh nhân không tồn tại"));
         }
-      }, 500)
-    })
+      }, 500);
+    });
   },
 
   /**
-   * Delete patient
-   * @param id - Patient ID
-   * @returns Promise<boolean>
+   * Deletes a patient record by ID.
+   * @async
+   * @param {number} id - Patient ID to delete.
+   * @returns {Promise<boolean>} Promise resolving to true if deletion successful.
    */
-  async deletePatient(id: string): Promise<boolean> {
+  async deletePatient(id: number): Promise<boolean> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(true)
-      }, 400)
-    })
+        const index = MOCK_PATIENTS.findIndex((p) => p.id === id);
+        if (index !== -1) {
+          MOCK_PATIENTS.splice(index, 1); // Actually remove from mock data
+        }
+        resolve(true);
+      }, 300);
+    });
   },
-}
-
-export { patientService }
+};

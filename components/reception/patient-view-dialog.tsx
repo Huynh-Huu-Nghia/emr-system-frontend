@@ -1,0 +1,79 @@
+"use client"
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Patient } from "@/core/api/patientService"
+import { GENDER_LABELS } from "@/lib/constants"
+import { formatDateVi } from "@/shared/lib/format/date"
+
+interface PatientViewDialogProps {
+  isOpen: boolean
+  onClose: () => void
+  patient?: Patient | null
+}
+
+export function PatientViewDialog({ isOpen, onClose, patient }: PatientViewDialogProps) {
+  if (!patient) {
+    return null
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg bg-white rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-xl font-bold text-medical-dark uppercase tracking-tight">
+            Thông tin bệnh nhân
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 px-6 py-4 text-slate-700">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Mã hồ sơ</p>
+              <p className="mt-1 font-semibold text-slate-800">#{patient.medicalHistoryNumber}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Giới tính</p>
+              <p className="mt-1 font-semibold text-slate-800">{GENDER_LABELS[patient.gender]}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Ngày sinh</p>
+              <p className="mt-1 font-semibold text-slate-800">{formatDateVi(patient.dob)}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Số điện thoại</p>
+              <p className="mt-1 font-semibold text-slate-800">{patient.phone}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400">Họ và tên</p>
+            <p className="mt-1 font-semibold text-slate-800">{patient.full_name}</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Mã BHYT</p>
+              <p className="mt-1 font-semibold text-slate-800">{patient.insurance_code || "Không có"}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">Ngày tạo</p>
+              <p className="mt-1 font-semibold text-slate-800">{formatDateVi(patient.created_at)}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400">Địa chỉ</p>
+            <p className="mt-1 font-semibold text-slate-800">{patient.address || "Chưa có địa chỉ"}</p>
+          </div>
+        </div>
+
+        <DialogFooter className="bg-slate-50 p-6 -mx-6 -mb-6 mt-4">
+          <Button type="button" variant="outline" onClick={onClose} className="w-full">
+            Đóng
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

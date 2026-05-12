@@ -21,7 +21,6 @@ interface MasterTableProps {
   currentPage?: number
   totalPages?: number
   onPageChange?: (page: number) => void
-  rowHoverColor?: string
 }
 
 const MasterTable = React.forwardRef<HTMLTableElement, MasterTableProps>(
@@ -34,7 +33,6 @@ const MasterTable = React.forwardRef<HTMLTableElement, MasterTableProps>(
       currentPage = 1,
       totalPages = 1,
       onPageChange,
-      rowHoverColor = "hover:bg-slate-50",
     },
     ref
   ) => {
