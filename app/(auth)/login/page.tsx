@@ -6,7 +6,7 @@ import { Activity, Lock, User } from "lucide-react"
 import { toast } from "sonner"
 import { authService, type LoginRequest } from "@/core/api/authService"
 import { Button } from "@/components/ui/button"
-import { ROUTES } from "@/constants/routes"
+import { POST_LOGIN_ROUTE } from "@/constants/routes"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -37,7 +37,7 @@ export default function LoginPage() {
         ) {
           localStorage.setItem("auth_token", response.token)
         }
-        setTimeout(() => router.push(ROUTES.RECEPTION.DASHBOARD), 1000)
+        setTimeout(() => router.push(POST_LOGIN_ROUTE), 1000)
       } else {
         toast.error(response.message || "Đăng nhập thất bại", { duration: 2000 })
       }

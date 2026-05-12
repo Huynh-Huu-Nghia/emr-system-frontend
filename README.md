@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EMR System — Frontend
 
-## Getting Started
+Ứng dụng web nội bộ (Next.js App Router) cho quản lý phòng khám: tiếp nhận, lịch hẹn, khám bệnh, EMR (tích hợp backend Spring Boot / Supabase sau).
 
-First, run the development server:
+## Yêu cầu
+
+- Node.js 20+ (khuyến nghị)
+- npm
+
+## Cài đặt và chạy local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Biến môi trường (tùy chọn)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Sao chép `.env.example` thành `.env.local` khi đã có API backend:
 
-## Learn More
+```bash
+cp .env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_API_BASE_URL` — URL gốc API (không có dấu `/` cuối). Để trống khi chỉ dùng mock trong code.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Build production
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run build
+npm start
+```
 
-## Deploy on Vercel
+Font không còn tải từ Google Fonts lúc build (tránh lỗi khi máy/offline CI không có mạng).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Luồng test nhanh
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Đăng nhập:** `/login` — mock chấp nhận mọi username/password không rỗng (xem `core/api/authService.ts`).
+2. Sau đăng nhập, app chuyển tới **`/reception/patients`** (Quản lý bệnh nhân — mock CRUD).
+3. Dùng sidebar để mở các trang stub (Lịch hẹn, Bác sĩ, Admin…).
+
+Token mock được lưu `localStorage` key `auth_token`.
+
+## Scripts
+
+| Lệnh          | Mô tả              |
+| ------------- | ------------------ |
+| `npm run dev` | Dev server         |
+| `npm run build` | Build production |
+| `npm start`   | Chạy build         |
+| `npm run lint`| ESLint             |
+
+## Cấu trúc gợi ý
+
+- `app/` — routes App Router
+- `components/` — UI layout & feature
+- `modules/` — hooks/feature theo domain (vd. `patient`)
+- `shared/` — query client, helpers, component dùng chung
+- `core/api/` — service layer (mock → API thật sau)
+
+---
+
+Bootstrapped with [create-next-app](https://nextjs.org/docs/app/api-reference/cli/create-next-app).

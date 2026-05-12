@@ -1,27 +1,36 @@
-// ✅ Toàn bộ đường dẫn tập trung một chỗ
-// Không bao giờ hardcode "/reception/dashboard" thẳng vào component
+/**
+ * Central route map — align hrefs with real files under `app/(dashboard)/`.
+ */
 
 export const ROUTES = {
-  LOGIN:    "/login",
+  LOGIN: "/login",
+
+  /** Root dashboard (role-agnostic landing inside shell). */
+  HOME: "/",
+
+  /** Placeholder settings (global). */
   SETTINGS: "/settings",
-  LOGOUT:   "/logout",
 
   RECEPTION: {
-    DASHBOARD:    "/reception/dashboard",
-    CHECKIN:      "/reception/checkin",
+    DASHBOARD: "/reception",
+    PATIENTS: "/reception/patients",
+    CHECKIN: "/reception/checkin",
     APPOINTMENTS: "/reception/appointments",
   },
 
   DOCTOR: {
-    DASHBOARD:   "/doctor/dashboard",
-    PATIENTS:    "/doctor/patients",
+    DASHBOARD: "/doctor",
+    PATIENTS: "/doctor/patients",
     EXAMINATION: "/doctor/examination",
-    RECORDS:     "/doctor/records",
+    RECORDS: "/doctor/records",
   },
 
   ADMIN: {
-    DASHBOARD: "/admin/dashboard",
-    STAFF:     "/admin/staff",
-    SETTINGS:  "/admin/settings",
+    DASHBOARD: "/admin",
+    STAFF: "/admin/staff",
+    SETTINGS: "/admin/settings",
   },
 } as const
+
+/** Default route after successful login (mock auth — adjust per role later). */
+export const POST_LOGIN_ROUTE = ROUTES.RECEPTION.PATIENTS

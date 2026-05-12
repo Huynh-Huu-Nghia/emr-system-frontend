@@ -1,10 +1,9 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Settings, LogOut } from "lucide-react"
 // ✅ Menu items tách ra constants — không hardcode trong component
 import { SIDEBAR_MENU } from "@/constants/navigation"
-import { ROUTES } from "@/constants/routes"
+import { SidebarFooter } from "@/components/layout/sidebar-footer"
 
 export function Sidebar() {
   const pathname = usePathname() ?? ""
@@ -60,23 +59,7 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Bottom actions */}
-      <div className="px-4 pb-6 border-t border-slate-200 pt-4 space-y-1">
-        <Link
-          href={ROUTES.SETTINGS}
-          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-500 transition hover:bg-slate-50"
-        >
-          <Settings className="h-5 w-5" />
-          Settings
-        </Link>
-        <Link
-          href={ROUTES.LOGOUT}
-          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-500 transition hover:bg-slate-50"
-        >
-          <LogOut className="h-5 w-5" />
-          Log Out
-        </Link>
-      </div>
+      <SidebarFooter />
     </aside>
   )
 }

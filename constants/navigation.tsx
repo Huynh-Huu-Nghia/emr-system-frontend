@@ -5,31 +5,35 @@ import {
   ClipboardList,
   Stethoscope,
   Settings,
+  DoorOpen,
 } from "lucide-react"
 
-// ✅ Một chỗ duy nhất để quản lý toàn bộ menu
-// Khi cần thêm/bớt menu item, chỉ sửa ở đây
+import type { ComponentType } from "react"
+
+import { ROUTES } from "@/constants/routes"
+
 export type MenuItem = {
   label: string
   href: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string }>
 }
 
 export const SIDEBAR_MENU: Record<"reception" | "doctor" | "admin", MenuItem[]> = {
   reception: [
-    { label: "Dashboard",   href: "/reception/dashboard",    icon: LayoutDashboard },
-    { label: "Tiếp đón",    href: "/reception/checkin",      icon: Users },
-    { label: "Lịch hẹn",   href: "/reception/appointments", icon: CalendarDays },
+    { label: "Dashboard", href: ROUTES.RECEPTION.DASHBOARD, icon: LayoutDashboard },
+    { label: "Bệnh nhân", href: ROUTES.RECEPTION.PATIENTS, icon: Users },
+    { label: "Tiếp đón", href: ROUTES.RECEPTION.CHECKIN, icon: DoorOpen },
+    { label: "Lịch hẹn", href: ROUTES.RECEPTION.APPOINTMENTS, icon: CalendarDays },
   ],
   doctor: [
-    { label: "Dashboard",   href: "/doctor/dashboard",       icon: LayoutDashboard },
-    { label: "Bệnh nhân",  href: "/doctor/patients",        icon: Users },
-    { label: "Khám bệnh",  href: "/doctor/examination",     icon: Stethoscope },
-    { label: "Bệnh án",    href: "/doctor/records",         icon: ClipboardList },
+    { label: "Dashboard", href: ROUTES.DOCTOR.DASHBOARD, icon: LayoutDashboard },
+    { label: "Bệnh nhân", href: ROUTES.DOCTOR.PATIENTS, icon: Users },
+    { label: "Khám bệnh", href: ROUTES.DOCTOR.EXAMINATION, icon: Stethoscope },
+    { label: "Bệnh án", href: ROUTES.DOCTOR.RECORDS, icon: ClipboardList },
   ],
   admin: [
-    { label: "Dashboard",       href: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Nhân viên",       href: "/admin/staff",     icon: Users },
-    { label: "Cấu hình hệ thống", href: "/admin/settings", icon: Settings },
+    { label: "Dashboard", href: ROUTES.ADMIN.DASHBOARD, icon: LayoutDashboard },
+    { label: "Nhân viên", href: ROUTES.ADMIN.STAFF, icon: Users },
+    { label: "Cấu hình hệ thống", href: ROUTES.ADMIN.SETTINGS, icon: Settings },
   ],
 }

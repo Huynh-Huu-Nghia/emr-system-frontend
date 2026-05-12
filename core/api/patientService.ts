@@ -76,8 +76,42 @@ export interface PatientListResponse {
  * This simulates real database data to test UI components and pagination.
  */
 const MOCK_PATIENTS: Patient[] = [
-  // ... existing mock data remains unchanged
-];
+  {
+    id: 1,
+    user_id: 101,
+    full_name: "Nguyễn Thị Mai",
+    dob: "1988-03-21",
+    gender: "FEMALE",
+    phone: "0909123456",
+    address: "Quận 1, TP.HCM",
+    insurance_code: "GD1234567890123",
+    medicalHistoryNumber: "BN001",
+    created_at: "2025-01-10T08:30:00.000Z",
+  },
+  {
+    id: 2,
+    user_id: null,
+    full_name: "Trần Văn Đức",
+    dob: "1995-11-08",
+    gender: "MALE",
+    phone: "0987654321",
+    address: "Thủ Đức, TP.HCM",
+    insurance_code: undefined,
+    medicalHistoryNumber: "BN002",
+    created_at: "2025-02-14T10:15:00.000Z",
+  },
+  {
+    id: 3,
+    user_id: null,
+    full_name: "Lê Hoàng Yến",
+    dob: "2001-07-02",
+    gender: "OTHER",
+    phone: "0377888999",
+    insurance_code: "DN9876543210987",
+    medicalHistoryNumber: "BN003",
+    created_at: "2025-03-01T14:00:00.000Z",
+  },
+]
 
 /**
  * Retrieves the next available patient ID.
