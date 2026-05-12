@@ -30,9 +30,8 @@ export interface LogoutResponse {
   message: string
 }
 
-/**
- * Mock user data for testing
- */
+const AUTH_USER_KEY = "auth_user"
+
 const MOCK_USER: User = {
   id: "user_001",
   username: "admin",
@@ -43,25 +42,43 @@ const MOCK_USER: User = {
 }
 
 /**
- * Auth Service object with async methods
- * No axios or fetch calls here until API is ready
+ * Dev-only: infer role from username prefix so team can test RBAC without real BE.
+ * - username starting with `doctor` / `bacsi` → DOCTOR
+ * - username starting with `reception` / `letan` → RECEPTIONIST
+ * - otherwise → ADMIN
  */
+export function resolveMockRoleFromUsername(username: string): User["role"] {
+  const key = username.trim().toLowerCase()
+  if (key.startsWith("doctor") || key.startsWith("bacsi")) return "DOCTOR"
+  if (key.startsWith("reception") || key.startsWith("letan")) return "RECEPTIONIST"
+  return "ADMIN"
+}
+
+function buildMockUser(credentials: LoginRequest): User {
+  const role = resolveMockRoleFromUsername(credentials.username)
+  const fullNames: Record<User["role"], string> = {
+    ADMIN: "Nguyễn Văn Admin",
+    DOCTOR: "BS. Trần Khám Bệnh",
+    RECEPTIONIST: "Lê Thị Tiếp Đón",
+  }
+  return {
+    ...MOCK_USER,
+    username: credentials.username.trim(),
+    fullName: fullNames[role],
+    role,
+    createdAt: new Date().toISOString(),
+  }
+}
+
 const authService = {
-  /**
-   * Login user with credentials
-   * @param credentials - LoginRequest with username and password
-   * @returns Promise<LoginResponse>
-   */
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     return new Promise((resolve) => {
-      // Simulate API delay
       setTimeout(() => {
-        // Mock validation: accept any non-empty credentials
         if (credentials.username && credentials.password) {
           resolve({
             success: true,
             message: "Đăng nhập thành công",
-            user: MOCK_USER,
+            user: buildMockUser(credentials),
             token: `mock_token_${Date.now()}`,
           })
         } else {
@@ -74,13 +91,8 @@ const authService = {
     })
   },
 
-  /**
-   * Logout current user
-   * @returns Promise<LogoutResponse>
-   */
   async logout(): Promise<LogoutResponse> {
     return new Promise((resolve) => {
-      // Simulate API delay
       setTimeout(() => {
         resolve({
           success: true,
@@ -90,24 +102,33 @@ const authService = {
     })
   },
 
-  /**
-   * Get current authenticated user
-   * @returns Promise<User | null>
-   */
   async getCurrentUser(): Promise<User | null> {
     return new Promise((resolve) => {
-      // Simulate API delay
       setTimeout(() => {
-        // In real scenario, check if token exists in localStorage/cookies
-        const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
-        if (token) {
-          resolve(MOCK_USER)
-        } else {
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("auth_token")
+            : null
+        if (!token) {
           resolve(null)
+          return
         }
+        const raw =
+          typeof window !== "undefined"
+            ? localStorage.getItem(AUTH_USER_KEY)
+            : null
+        if (raw) {
+          try {
+            resolve(JSON.parse(raw) as User)
+            return
+          } catch {
+            /* fall through */
+          }
+        }
+        resolve({ ...MOCK_USER })
       }, 300)
     })
   },
 }
 
-export { authService }
+export { authService, AUTH_USER_KEY }

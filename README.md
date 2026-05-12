@@ -37,11 +37,16 @@ Font không còn tải từ Google Fonts lúc build (tránh lỗi khi máy/offli
 
 ## Luồng test nhanh
 
-1. **Đăng nhập:** `/login` — mock chấp nhận mọi username/password không rỗng (xem `core/api/authService.ts`).
-2. Sau đăng nhập, app chuyển tới **`/reception/patients`** (Quản lý bệnh nhân — mock CRUD).
-3. Dùng sidebar để mở các trang stub (Lịch hẹn, Bác sĩ, Admin…).
+1. **Đăng nhập:** `/login` — mock chấp nhận username/password không rỗng. **Vai trò theo username:** `reception*` / `letan*` → Lễ tân; `doctor*` / `bacsi*` → Bác sĩ; còn lại → Admin (xem `core/api/authService.ts`).
+2. Sau đăng nhập, app chuyển theo role (vd. Lễ tân → **`/reception/patients`**).
+3. **Hàng đợi mock:** `/reception/checkin` → “Cho vào hàng đợi”; mở tab **`/doctor/patients`** để xem (đồng bộ qua `localStorage` + sự kiện `storage`).
+4. Sidebar: các trang stub khác (Lịch hẹn, Admin…).
 
-Token mock được lưu `localStorage` key `auth_token`.
+Token mock: `localStorage` key `auth_token`; user snapshot: `auth_user`.
+
+## Tài liệu cho team
+
+- **[docs/frontend-playbook.md](./docs/frontend-playbook.md)** — quy ước UI, folder, Query, queue stub, checklist PR.
 
 ## Scripts
 

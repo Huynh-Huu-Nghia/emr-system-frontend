@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { authService, type User, type LoginRequest } from "@/core/api/authService"
+import { authService, AUTH_USER_KEY, type User, type LoginRequest } from "@/core/api/authService"
 import { useRouter } from "next/navigation"
 import { ROUTES } from "@/constants/routes"
 import { toast } from "sonner"
@@ -11,7 +11,7 @@ interface AuthContextValue {
   user: User | null
   isLoading: boolean
   isLoggedIn: boolean
-  login: (credentials: LoginRequest) => Promise<boolean>
+  login: (credentials: LoginRequest) => Promise<User | null>
   logout: () => Promise<void>
 }
 
@@ -30,24 +30,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const login = async (credentials: LoginRequest): Promise<boolean> => {
+  const login = async (credentials: LoginRequest): Promise<User | null> => {
     const response = await authService.login(credentials)
     if (response.success && response.user && response.token) {
       localStorage.setItem("auth_token", response.token)
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user))
       setUser(response.user)
       toast.success(response.message, {
         description: `Chào mừng ${response.user.fullName}`,
         duration: 2000,
       })
-      return true
+      return response.user
     }
     toast.error(response.message || "Đăng nhập thất bại")
-    return false
+    return null
   }
 
   const logout = async () => {
     await authService.logout()
     localStorage.removeItem("auth_token")
+    localStorage.removeItem(AUTH_USER_KEY)
     setUser(null)
     router.push(ROUTES.LOGIN)
     toast.success("Đã đăng xuất")

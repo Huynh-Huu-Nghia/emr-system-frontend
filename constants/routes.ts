@@ -2,6 +2,8 @@
  * Central route map — align hrefs with real files under `app/(dashboard)/`.
  */
 
+import type { User } from "@/core/api/authService"
+
 export const ROUTES = {
   LOGIN: "/login",
 
@@ -32,5 +34,18 @@ export const ROUTES = {
   },
 } as const
 
-/** Default route after successful login (mock auth — adjust per role later). */
+/** Default landing when role is unknown (should not happen). */
 export const POST_LOGIN_ROUTE = ROUTES.RECEPTION.PATIENTS
+
+export function getPostLoginPathForRole(role: User["role"]): string {
+  switch (role) {
+    case "RECEPTIONIST":
+      return ROUTES.RECEPTION.PATIENTS
+    case "DOCTOR":
+      return ROUTES.DOCTOR.DASHBOARD
+    case "ADMIN":
+      return ROUTES.ADMIN.DASHBOARD
+    default:
+      return POST_LOGIN_ROUTE
+  }
+}
