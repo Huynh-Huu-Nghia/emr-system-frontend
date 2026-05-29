@@ -113,6 +113,8 @@ const MOCK_PATIENTS: Patient[] = [
   },
 ]
 
+const clonePatient = (patient: Patient): Patient => ({ ...patient })
+
 /**
  * Retrieves the next available patient ID.
  * Uses the current mock dataset to ensure ID uniqueness.
@@ -153,7 +155,7 @@ export const patientService = {
       setTimeout(() => {
         resolve({
           success: true,
-          data: MOCK_PATIENTS,
+          data: MOCK_PATIENTS.map(clonePatient),
           total: MOCK_PATIENTS.length,
         });
       }, 500);
@@ -171,7 +173,7 @@ export const patientService = {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const patient = MOCK_PATIENTS.find((p) => p.id === id);
-        if (patient) resolve(patient);
+        if (patient) resolve(clonePatient(patient));
         else reject(new Error("Không tìm thấy bệnh nhân"));
       }, 300);
     });
@@ -194,7 +196,7 @@ export const patientService = {
           created_at: new Date().toISOString(),
         };
         MOCK_PATIENTS.push(newPatient); // Persist new mock patient in-memory
-        resolve(newPatient);
+        resolve(clonePatient(newPatient));
       }, 500);
     });
   },
@@ -213,7 +215,7 @@ export const patientService = {
         const index = MOCK_PATIENTS.findIndex((p) => p.id === id);
         if (index !== -1) {
           MOCK_PATIENTS[index] = { ...MOCK_PATIENTS[index], ...data }; // Actually update mock data
-          resolve(MOCK_PATIENTS[index]);
+          resolve(clonePatient(MOCK_PATIENTS[index]));
         } else {
           reject(new Error("Bệnh nhân không tồn tại"));
         }

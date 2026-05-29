@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { PatientDialog } from "@/components/reception/patient-dialog"
+import { PatientViewDialog } from "@/components/reception/patient-view-dialog"
 import { ConfirmDialog } from "@/shared/components/dialog/confirm-dialog"
 import { normalizeUnknownError } from "@/shared/lib/error/normalize-api-error"
 import { useDeletePatientMutation } from "@/modules/patient/hooks/use-delete-patient-mutation"
@@ -35,6 +36,7 @@ export default function PatientsPage() {
   const [insuranceFilter, setInsuranceFilter] =
     useState<PatientInsuranceFilter>("ALL")
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null)
+  const [viewTarget, setViewTarget] = useState<Patient | null>(null)
 
   const filteredPatients = useMemo(
     () =>
@@ -93,6 +95,7 @@ export default function PatientsPage() {
           filteredPatients={filteredPatients}
           deletePending={deleteMutation.isPending}
           onEdit={(p) => handleOpenDialog(p)}
+          onView={setViewTarget}
           onDeleteRequest={setDeleteTarget}
         />
       </div>
@@ -101,6 +104,12 @@ export default function PatientsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialData={editingPatient}
+      />
+
+      <PatientViewDialog
+        isOpen={viewTarget != null}
+        onClose={() => setViewTarget(null)}
+        patient={viewTarget}
       />
 
       <ConfirmDialog

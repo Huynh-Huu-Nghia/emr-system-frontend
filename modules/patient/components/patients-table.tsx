@@ -13,7 +13,7 @@ import { ErrorState } from "@/shared/components/states/error-state"
 import { LoadingBlock } from "@/shared/components/states/loading-block"
 import { GenderBadge } from "@/shared/components/feedback/gender-badge"
 import { formatDateVi } from "@/shared/lib/format/date"
-import { Pencil, Trash2, UserRound } from "lucide-react"
+import { Eye, Pencil, Trash2, UserRound } from "lucide-react"
 
 type PatientsTableProps = {
   isPending: boolean
@@ -24,6 +24,7 @@ type PatientsTableProps = {
   filteredPatients: Patient[]
   deletePending: boolean
   onEdit: (patient: Patient) => void
+  onView: (patient: Patient) => void
   onDeleteRequest: (patient: Patient) => void
 }
 
@@ -36,6 +37,7 @@ export function PatientsTable({
   filteredPatients,
   deletePending,
   onEdit,
+  onView,
   onDeleteRequest,
 }: PatientsTableProps) {
   return (
@@ -126,6 +128,15 @@ export function PatientsTable({
                 <span className="text-slate-500">{p.insurance_code || "---"}</span>
               </TableCell>
               <TableCell className="flex items-center justify-end gap-2 pr-8 text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Xem nhanh"
+                  onClick={() => onView(p)}
+                  className="rounded-full shadow-none transition-all hover:bg-slate-200"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

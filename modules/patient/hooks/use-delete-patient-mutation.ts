@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { patientService } from "@/core/api/patientService"
+import type { Patient } from "@/core/api/patientService"
 import { normalizeUnknownError } from "@/shared/lib/error/normalize-api-error"
 import { queryKeys } from "@/shared/query/query-keys"
 
@@ -17,7 +18,10 @@ export function useDeletePatientMutation(
 
   return useMutation({
     mutationFn: async (patientId: number) => patientService.deletePatient(patientId),
-    onSuccess: async () => {
+    onSuccess: async (_deleted, patientId) => {
+      qc.setQueryData<Patient[]>(queryKeys.patients.list(), (patients) =>
+        patients?.filter((patient) => patient.id !== patientId)
+      )
       await qc.invalidateQueries({ queryKey: queryKeys.patients.all })
       toast.success(onSuccessMsg)
     },

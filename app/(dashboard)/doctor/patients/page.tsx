@@ -28,11 +28,28 @@ export default function DoctorPatientsPage() {
             {queue.map((q) => (
               <li
                 key={q.id}
-                className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                className="flex flex-col gap-1 border-b border-slate-50 py-3 text-sm last:border-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
               >
-                <span className="font-semibold text-slate-800">{q.patientName}</span>
-                <span className="text-medical-primary">#{q.medicalHistoryNumber}</span>
-                <span className="text-xs text-slate-400">{formatDateVi(q.enqueuedAt)}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-slate-800">{q.patientName}</span>
+                  <span className="text-medical-primary">#{q.medicalHistoryNumber}</span>
+                  {q.source === "WALK_IN" ? (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-900">
+                      Vãng lai
+                    </span>
+                  ) : q.source === "REGISTERED" ? (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
+                      Hồ sơ
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-x-3 text-xs text-slate-400">
+                  <span>{formatDateVi(q.enqueuedAt)}</span>
+                  {q.patientId != null ? <span>patient_id: {q.patientId}</span> : null}
+                  {q.appointmentId != null ? (
+                    <span>appointment_id: {q.appointmentId}</span>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

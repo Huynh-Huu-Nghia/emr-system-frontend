@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import type { PatientCreateRequest } from "@/core/api/patientService"
+import type { Patient, PatientCreateRequest } from "@/core/api/patientService"
 import { patientService } from "@/core/api/patientService"
 import { normalizeUnknownError } from "@/shared/lib/error/normalize-api-error"
 import { queryKeys } from "@/shared/query/query-keys"
@@ -12,7 +12,12 @@ export function useUpdatePatientMutation() {
   return useMutation({
     mutationFn: (vars: { id: number; data: Partial<PatientCreateRequest> }) =>
       patientService.updatePatient(vars.id, vars.data),
-    onSuccess: async () => {
+    onSuccess: async (updatedPatient) => {
+      qc.setQueryData<Patient[]>(queryKeys.patients.list(), (patients) =>
+        patients?.map((patient) =>
+          patient.id === updatedPatient.id ? updatedPatient : patient
+        )
+      )
       await qc.invalidateQueries({ queryKey: queryKeys.patients.all })
       toast.success("Cập nhật thành công")
     },
