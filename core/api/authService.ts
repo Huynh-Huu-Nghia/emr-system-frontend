@@ -1,8 +1,4 @@
-/**
- * Authentication Service
- * Handles all auth-related API calls and data transformations.
- * Currently mocked for testing; integrate with real API endpoint later.
- */
+import { apiFetch } from "@/shared/lib/api-client"
 
 export interface LoginRequest {
   username: string
@@ -32,102 +28,39 @@ export interface LogoutResponse {
 
 const AUTH_USER_KEY = "auth_user"
 
-const MOCK_USER: User = {
-  id: "user_001",
-  username: "admin",
-  fullName: "Nguyễn Văn Admin",
-  email: "admin@emr.local",
-  role: "ADMIN",
-  createdAt: new Date().toISOString(),
-}
-
-/**
- * Dev-only: infer role from username prefix so team can test RBAC without real BE.
- * - username starting with `doctor` / `bacsi` → DOCTOR
- * - username starting with `reception` / `letan` → RECEPTIONIST
- * - otherwise → ADMIN
- */
-export function resolveMockRoleFromUsername(username: string): User["role"] {
-  const key = username.trim().toLowerCase()
-  if (key.startsWith("doctor") || key.startsWith("bacsi")) return "DOCTOR"
-  if (key.startsWith("reception") || key.startsWith("letan")) return "RECEPTIONIST"
-  return "ADMIN"
-}
-
-function buildMockUser(credentials: LoginRequest): User {
-  const role = resolveMockRoleFromUsername(credentials.username)
-  const fullNames: Record<User["role"], string> = {
-    ADMIN: "Nguyễn Văn Admin",
-    DOCTOR: "BS. Trần Khám Bệnh",
-    RECEPTIONIST: "Lê Thị Tiếp Đón",
-  }
-  return {
-    ...MOCK_USER,
-    username: credentials.username.trim(),
-    fullName: fullNames[role],
-    role,
-    createdAt: new Date().toISOString(),
-  }
-}
-
 const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (credentials.username && credentials.password) {
-          resolve({
-            success: true,
-            message: "Đăng nhập thành công",
-            user: buildMockUser(credentials),
-            token: `mock_token_${Date.now()}`,
-          })
-        } else {
-          resolve({
-            success: false,
-            message: "Tên tài khoản hoặc mật khẩu không hợp lệ",
-          })
-        }
-      }, 1000)
+    const res = await apiFetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
     })
+    const data = await res.json()
+    return data
   },
 
   async logout(): Promise<LogoutResponse> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          message: "Đăng xuất thành công",
-        })
-      }, 500)
-    })
+    return { success: true, message: "Đăng xuất thành công" }
   },
 
   async getCurrentUser(): Promise<User | null> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("auth_token")
-            : null
-        if (!token) {
-          resolve(null)
-          return
-        }
-        const raw =
-          typeof window !== "undefined"
-            ? localStorage.getItem(AUTH_USER_KEY)
-            : null
-        if (raw) {
-          try {
-            resolve(JSON.parse(raw) as User)
-            return
-          } catch {
-            /* fall through */
-          }
-        }
-        resolve({ ...MOCK_USER })
-      }, 300)
-    })
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("auth_token")
+        : null
+    if (!token) return null
+    const raw =
+      typeof window !== "undefined"
+        ? localStorage.getItem(AUTH_USER_KEY)
+        : null
+    if (raw) {
+      try {
+        return JSON.parse(raw) as User
+      } catch {
+        /* fall through */
+      }
+    }
+    return null
   },
 }
 

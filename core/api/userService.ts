@@ -3,7 +3,7 @@ import { apiFetch } from "@/shared/lib/api-client"
 export interface UserRecord {
   id: number
   username: string
-  role: "ADMIN" | "DOCTOR" | "RECEPTIONIST"
+  role: "ADMIN" | "DOCTOR" | "RECEPTIONIST" | "PATIENT"
   status: "ACTIVE" | "LOCKED"
   createdAt: string
 }

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Activity, Lock, User } from "lucide-react"
 import { toast } from "sonner"
 import type { LoginRequest } from "@/core/api/authService"
-import { resolveMockRoleFromUsername } from "@/core/api/authService"
 import { Button } from "@/components/ui/button"
 import { getPostLoginPathForRole } from "@/constants/routes"
 import { useAuth } from "@/context/AuthContext"
@@ -44,8 +43,6 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
-
-  const previewRole = resolveMockRoleFromUsername(formData.username)
 
   return (
     <main className="flex h-screen w-full items-center justify-center bg-medical-light px-4 py-8">
@@ -87,7 +84,7 @@ export default function LoginPage() {
               <input
                 type="text"
                 name="username"
-                placeholder="Tên tài khoản (thử: reception / doctor / admin)"
+                placeholder="Tên tài khoản"
                 value={formData.username}
                 onChange={handleInputChange}
                 required
@@ -108,11 +105,6 @@ export default function LoginPage() {
               />
               <Lock className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             </div>
-
-            <p className="text-center text-xs text-slate-500">
-              Mock: vai trò theo username — hiện tại:{" "}
-              <span className="font-semibold text-medical-dark">{previewRole}</span>
-            </p>
 
             <Button
               type="submit"

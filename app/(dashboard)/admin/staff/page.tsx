@@ -48,11 +48,13 @@ export default function AdminStaffPage() {
       ADMIN: "bg-purple-100 text-purple-700",
       DOCTOR: "bg-blue-100 text-blue-700",
       RECEPTIONIST: "bg-green-100 text-green-700",
+      PATIENT: "bg-slate-100 text-slate-700",
     }
     const labels: Record<string, string> = {
       ADMIN: "Quản trị",
       DOCTOR: "Bác sĩ",
       RECEPTIONIST: "Lễ tân",
+      PATIENT: "Bệnh nhân",
     }
     return (
       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[role]}`}>
