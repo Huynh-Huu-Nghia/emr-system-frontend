@@ -11,4 +11,25 @@ export const queryKeys = {
     all: ["appointments"] as const,
     list: () => [...queryKeys.appointments.all, "list"] as const,
   },
+  users: {
+    all: ["users"] as const,
+    list: () => [...queryKeys.users.all, "list"] as const,
+  },
+  doctors: {
+    all: ["doctors"] as const,
+    list: () => [...queryKeys.doctors.all, "list"] as const,
+  },
+  medicines: {
+    all: ["medicines"] as const,
+    list: () => [...queryKeys.medicines.all, "list"] as const,
+  },
+  payments: {
+    all: ["payments"] as const,
+    list: () => [...queryKeys.payments.all, "list"] as const,
+  },
+  dashboard: {
+    all: ["dashboard"] as const,
+    stats: () => [...queryKeys.dashboard.all, "stats"] as const,
+    auditLog: () => [...queryKeys.dashboard.all, "audit-log"] as const,
+  },
 } as const

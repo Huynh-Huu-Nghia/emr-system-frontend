@@ -30,6 +30,9 @@ export const ROUTES = {
   ADMIN: {
     DASHBOARD: "/admin",
     STAFF: "/admin/staff",
+    DOCTORS: "/admin/doctors",
+    MEDICINES: "/admin/medicines",
+    PAYMENTS: "/admin/payments",
     SETTINGS: "/admin/settings",
   },
 } as const
