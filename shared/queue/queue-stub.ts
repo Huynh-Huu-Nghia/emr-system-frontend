@@ -53,19 +53,38 @@ function normalizeQueueItem(raw: unknown): QueuePatientStub | null {
   }
 }
 
+let cachedQueue: QueuePatientStub[] = []
+let cachedRaw: string | null = null
+
 function readQueue(): QueuePatientStub[] {
-  if (typeof window === "undefined") return []
+  if (typeof window === "undefined") return EMPTY
   try {
     const raw = localStorage.getItem(MOCK_QUEUE_KEY)
-    if (!raw) return []
+    if (raw === cachedRaw) return cachedQueue
+    cachedRaw = raw
+    if (!raw) {
+      cachedQueue = EMPTY
+      return EMPTY
+    }
     const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed
+    if (!Array.isArray(parsed)) {
+      cachedQueue = EMPTY
+      return EMPTY
+    }
+    cachedQueue = parsed
       .map(normalizeQueueItem)
       .filter((x): x is QueuePatientStub => x != null)
+    return cachedQueue
   } catch {
-    return []
+    cachedQueue = EMPTY
+    return EMPTY
   }
+}
+
+const EMPTY: QueuePatientStub[] = []
+
+function getServerSnapshot(): QueuePatientStub[] {
+  return EMPTY
 }
 
 function writeQueue(items: QueuePatientStub[]) {
@@ -129,6 +148,6 @@ export function useListenQueue(): QueuePatientStub[] {
   return useSyncExternalStore(
     subscribeQueue,
     readQueue,
-    () => [] as QueuePatientStub[]
+    getServerSnapshot
   )
 }
