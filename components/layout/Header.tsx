@@ -1,8 +1,9 @@
 "use client"
 import { usePathname } from "next/navigation"
-import { Bell, ChevronDown, Mail, Plus, Search } from "lucide-react"
+import { ChevronDown, Mail, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NotificationBell } from "@/components/layout/notification-bell"
 
 // ✅ Tập trung text theo role ở đây, không hardcode rải rác
 const ROLE_CONFIG = {
@@ -69,11 +70,8 @@ export function Header() {
             {buttonLabel}
           </Button>
 
-          {/* ✅ Icon buttons — dùng Button variant ghost + size icon */}
-          <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-full bg-slate-100">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
-          </Button>
+          {/* Notifications */}
+          <NotificationBell />
 
           <Button variant="ghost" size="icon" className="relative h-12 w-12 rounded-full bg-slate-100">
             <Mail className="h-5 w-5" />

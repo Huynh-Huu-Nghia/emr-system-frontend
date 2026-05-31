@@ -4,11 +4,12 @@ import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Trash2, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { Search, Plus, Trash2, ArrowLeft, CheckCircle2, BookmarkPlus, BookOpen } from "lucide-react"
 import { toast } from "sonner"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { medicineService, type Medicine } from "@/core/api/medicineService"
 import { prescriptionService } from "@/core/api/prescriptionService"
+import { prescriptionTemplateService, type PrescriptionTemplate, type PrescriptionTemplateItem } from "@/core/api/prescriptionTemplateService"
 import { queryKeys } from "@/shared/query/query-keys"
 
 interface PrescriptionItem {
@@ -31,10 +32,18 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
   const [searchQuery, setSearchQuery] = useState("")
   const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState("")
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [templateName, setTemplateName] = useState("")
+  const qc = useQueryClient()
 
   const { data: medicines = [] } = useQuery({
     queryKey: queryKeys.medicines.list(),
     queryFn: () => medicineService.getAll(),
+  })
+
+  const { data: templates = [] } = useQuery({
+    queryKey: ["prescription-templates"],
+    queryFn: () => prescriptionTemplateService.getAll(),
   })
 
   const filteredMedicines = useMemo(() => {
@@ -69,6 +78,51 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
 
   const handleRemoveItem = (medicineId: number) => {
     setItems((prev) => prev.filter((i) => i.medicineId !== medicineId))
+  }
+
+  const handleSaveAsTemplate = async () => {
+    if (items.length === 0) {
+      toast.error("Thêm thuốc trước khi lưu mẫu")
+      return
+    }
+    if (!templateName.trim()) {
+      toast.error("Vui lòng nhập tên mẫu đơn")
+      return
+    }
+    try {
+      await prescriptionTemplateService.create({
+        doctorId: 0,
+        name: templateName,
+        items: items.map((i) => ({
+          medicineId: i.medicineId,
+          medicineName: i.medicineName,
+          quantity: i.quantity,
+          dosage: i.dosage,
+        })),
+      })
+      toast.success("Đã lưu mẫu đơn thuốc")
+      setTemplateName("")
+      qc.invalidateQueries({ queryKey: ["prescription-templates"] })
+    } catch {
+      toast.error("Không thể lưu mẫu")
+    }
+  }
+
+  const handleLoadTemplate = (template: PrescriptionTemplate) => {
+    const newItems: PrescriptionItem[] = template.items.map((t) => {
+      const med = medicines.find((m) => m.id === t.medicineId)
+      return {
+        medicineId: t.medicineId,
+        medicineName: t.medicineName || med?.name || "Unknown",
+        unit: med?.unit || "",
+        unitPrice: med?.price || 0,
+        quantity: t.quantity,
+        dosage: t.dosage,
+      }
+    })
+    setItems(newItems)
+    setShowTemplates(false)
+    toast.success(`Đã tải mẫu "${template.name}"`)
   }
 
   const handleUpdateItem = (medicineId: number, field: "quantity" | "dosage", value: string) => {
@@ -169,6 +223,51 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
+        </div>
+
+        {/* Templates */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">Mẫu đơn thuốc</h3>
+            <Button variant="ghost" size="sm" onClick={() => setShowTemplates(!showTemplates)}>
+              <BookOpen className="mr-1 h-4 w-4" />
+              {showTemplates ? "Ẩn" : "Xem mẫu"}
+            </Button>
+          </div>
+
+          {showTemplates && (
+            <div className="mt-3 space-y-2">
+              {templates.length === 0 ? (
+                <p className="text-xs text-slate-400">Chưa có mẫu nào. Lưu đơn hiện tại làm mẫu bên dưới.</p>
+              ) : (
+                templates.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">{t.name}</p>
+                      <p className="text-xs text-slate-400">{t.items.length} thuốc</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => handleLoadTemplate(t)}>
+                      <Plus className="h-4 w-4 text-medical-primary" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {items.length > 0 && (
+            <div className="mt-3 flex gap-2">
+              <Input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Tên mẫu..."
+                className="text-sm"
+              />
+              <Button variant="outline" size="sm" onClick={handleSaveAsTemplate} className="flex-shrink-0">
+                <BookmarkPlus className="mr-1 h-4 w-4" /> Lưu mẫu
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
