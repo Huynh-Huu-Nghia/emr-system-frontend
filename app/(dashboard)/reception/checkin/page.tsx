@@ -86,7 +86,7 @@ export default function ReceptionCheckinPage() {
           appointmentId: apptId,
           source: "REGISTERED",
         })
-        toast.success("Đã check-in — ca đã vào hàng đợi bác sĩ (mock)")
+        toast.success("Đã check-in — bệnh nhân đã vào hàng đợi")
         setAppointmentId(NO_APPOINTMENT)
       } finally {
         setLoading(false)
@@ -109,7 +109,7 @@ export default function ReceptionCheckinPage() {
         appointmentId: null,
         source: "WALK_IN",
       })
-      toast.success("Đã check-in vãng lai (mock)")
+      toast.success("Đã check-in vãng lai")
       setWalkName("")
       setWalkCode("")
     } finally {
@@ -121,7 +121,7 @@ export default function ReceptionCheckinPage() {
     <div className="min-h-screen space-y-8 bg-[#fafafa] p-6 lg:p-8">
       <PageHeader
         title="Tiếp đón & Check-in"
-        description="Đưa bệnh nhân vào hàng đợi khám qua pushToQueue — payload tương thích khi nối BE."
+        description="Đưa bệnh nhân vào hàng đợi khám bệnh"
       >
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="rounded-full" asChild>
@@ -248,8 +248,7 @@ export default function ReceptionCheckinPage() {
                 />
               </div>
               <p className="text-xs text-slate-500 sm:col-span-2">
-                Vãng lai: chưa có <code className="rounded bg-slate-100 px-1">patientId</code>{" "}
-                trong queue — sau khi tạo hồ sơ, BE có thể cập nhật liên kết.
+                Bệnh nhân vãng lai sẽ được liên kết hồ sơ sau khi lễ tân tạo hồ sơ mới.
               </p>
             </div>
           )}
@@ -266,12 +265,11 @@ export default function ReceptionCheckinPage() {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-            Hàng đợi (stub)
+            Hàng đợi hiện tại
           </h2>
           {queue.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">
-              Chưa có ca nào. Check-in để thấy bản ghi; tab Bác sĩ đồng bộ qua{" "}
-              <code className="rounded bg-slate-100 px-1 text-xs">localStorage</code>.
+              Chưa có bệnh nhân nào. Check-in để đưa vào hàng đợi.
             </p>
           ) : (
             <ul className="mt-4 divide-y divide-slate-100">

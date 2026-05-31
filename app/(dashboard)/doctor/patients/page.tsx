@@ -13,13 +13,12 @@ export default function DoctorPatientsPage() {
   const router = useRouter()
 
   const handleStartExam = (patient: (typeof queue)[number]) => {
-    const params = new URLSearchParams({
-      patientName: patient.patientName,
-      medicalHistoryNumber: patient.medicalHistoryNumber,
-      ...(patient.patientId != null ? { patientId: String(patient.patientId) } : {}),
-      ...(patient.appointmentId != null ? { appointmentId: String(patient.appointmentId) } : {}),
-      queueId: patient.id,
-    })
+    const params = new URLSearchParams()
+    params.set("patientName", patient.patientName)
+    params.set("medicalHistoryNumber", patient.medicalHistoryNumber)
+    params.set("queueId", String(patient.id))
+    if (patient.patientId != null) params.set("patientId", String(patient.patientId))
+    if (patient.appointmentId != null) params.set("appointmentId", String(patient.appointmentId))
     router.push(`${ROUTES.DOCTOR.EXAMINATION}?${params.toString()}`)
   }
 
