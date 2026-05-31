@@ -36,8 +36,10 @@ export function Sidebar() {
             </p>
             {menuItems.map((item) => {
               const Icon = item.icon
-              const active =
-                pathname === item.href || pathname.startsWith(item.href + "/")
+              const isDashboard = item.href === "/doctor" || item.href === "/admin" || item.href === "/reception"
+              const active = isDashboard
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(item.href + "/")
 
               return (
                 <Link

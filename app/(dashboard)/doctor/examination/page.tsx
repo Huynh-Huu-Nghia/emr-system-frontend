@@ -126,9 +126,21 @@ export default function DoctorExaminationPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const patientName = searchParams.get("patientName") ?? "Bệnh nhân"
+  const patientName = searchParams.get("patientName")
   const medicalHistoryNumber = searchParams.get("medicalHistoryNumber") ?? ""
   const appointmentId = searchParams.get("appointmentId")
+
+  // Redirect nếu không có bệnh nhân
+  if (!patientName) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+        <p className="text-sm text-slate-500">Vui lòng chọn bệnh nhân từ hàng đợi trước khi khám</p>
+        <Button onClick={() => router.push(ROUTES.DOCTOR.PATIENTS)} className="bg-medical-primary text-white hover:bg-medical-dark">
+          Quay lại danh sách bệnh nhân
+        </Button>
+      </div>
+    )
+  }
 
   const [step, setStep] = useState<"exam" | "prescription">("exam")
   const [saving, setSaving] = useState(false)
