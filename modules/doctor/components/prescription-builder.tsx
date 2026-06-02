@@ -11,6 +11,7 @@ import { medicineService, type Medicine } from "@/core/api/medicineService"
 import { prescriptionService } from "@/core/api/prescriptionService"
 import { prescriptionTemplateService, type PrescriptionTemplate, type PrescriptionTemplateItem } from "@/core/api/prescriptionTemplateService"
 import { queryKeys } from "@/shared/query/query-keys"
+import { MedicineSearchModal } from "./medicine-search-modal"
 
 interface PrescriptionItem {
   medicineId: number
@@ -33,6 +34,7 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
   const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState("")
   const [showTemplates, setShowTemplates] = useState(false)
+  const [showMedicineSearch, setShowMedicineSearch] = useState(false)
   const [templateName, setTemplateName] = useState("")
   const qc = useQueryClient()
 
@@ -176,7 +178,13 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
       {/* Left: Medicine search */}
       <div className="space-y-4 lg:col-span-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">Tìm thuốc</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700">Tìm thuốc</h3>
+            <Button size="sm" className="bg-medical-primary text-white hover:bg-medical-dark" onClick={() => setShowMedicineSearch(true)}>
+              <Search className="mr-1 h-4 w-4" />
+              Tìm nâng cao
+            </Button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -342,6 +350,13 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
           </Button>
         </div>
       </div>
+
+      <MedicineSearchModal
+        open={showMedicineSearch}
+        onOpenChange={setShowMedicineSearch}
+        onMedicineSelect={handleAddMedicine}
+        excludeIds={items.map((i) => i.medicineId)}
+      />
     </div>
   )
 }

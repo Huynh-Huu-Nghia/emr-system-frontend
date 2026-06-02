@@ -22,6 +22,11 @@ export const queryKeys = {
   medicines: {
     all: ["medicines"] as const,
     list: () => [...queryKeys.medicines.all, "list"] as const,
+    search: (search?: string, categoryId?: number | null) =>
+      [...queryKeys.medicines.all, "search", search ?? "", categoryId ?? ""] as const,
+  },
+  medicineCategories: {
+    all: ["medicine-categories"] as const,
   },
   payments: {
     all: ["payments"] as const,

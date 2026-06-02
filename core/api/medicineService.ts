@@ -1,5 +1,24 @@
 import { apiFetch } from "@/shared/lib/api-client"
 
+// ── Category ──────────────────────────────────────────
+export interface MedicineCategory {
+  id: number
+  name: string
+  nameVi: string
+  description: string | null
+  displayOrder: number
+  createdAt: string
+}
+
+export const medicineCategoryService = {
+  async getAll(): Promise<MedicineCategory[]> {
+    const res = await apiFetch("/api/medicine-categories")
+    if (!res.ok) throw new Error("Failed to fetch medicine categories")
+    return res.json()
+  },
+}
+
+// ── Medicine ──────────────────────────────────────────
 export interface Medicine {
   id: number
   name: string
@@ -7,6 +26,9 @@ export interface Medicine {
   price: number
   stockQuantity: number
   expiryDate: string
+  categoryId: number | null
+  categoryName: string | null
+  categoryNameVi: string | null
 }
 
 export interface MedicineCreateRequest {
@@ -15,13 +37,23 @@ export interface MedicineCreateRequest {
   price: number
   stockQuantity: number
   expiryDate: string
+  categoryId?: number | null
+}
+
+export interface MedicineSearchParams {
+  search?: string
+  categoryId?: number | null
 }
 
 export type MedicineUpdateRequest = Partial<MedicineCreateRequest>
 
 export const medicineService = {
-  async getAll(): Promise<Medicine[]> {
-    const res = await apiFetch("/api/medicines")
+  async getAll(params?: MedicineSearchParams): Promise<Medicine[]> {
+    const qp = new URLSearchParams()
+    if (params?.search) qp.set("search", params.search)
+    if (params?.categoryId != null) qp.set("categoryId", String(params.categoryId))
+    const qs = qp.toString()
+    const res = await apiFetch(`/api/medicines${qs ? "?" + qs : ""}`)
     if (!res.ok) throw new Error("Failed to fetch medicines")
     return res.json()
   },
@@ -56,14 +88,10 @@ export const medicineService = {
 export function isLowStock(med: Medicine): boolean {
   return med.stockQuantity <= 10
 }
-
 export function isExpiringSoon(med: Medicine): boolean {
-  const now = new Date()
-  const expiry = new Date(med.expiryDate)
-  const diffDays = (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  return diffDays <= 90 && diffDays > 0
+  const diff = (new Date(med.expiryDate).getTime() - Date.now()) / 86_400_000
+  return diff <= 90 && diff > 0
 }
-
 export function isExpired(med: Medicine): boolean {
   return new Date(med.expiryDate) < new Date()
 }
