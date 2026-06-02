@@ -178,7 +178,7 @@ export default function DoctorExaminationPage() {
     setSaving(true)
     try {
       const result = await medicalRecordService.create({
-        appointmentId: appointmentId ? Number(appointmentId) : 0,
+        appointmentId: appointmentId ? Number(appointmentId) : null,
         symptoms: buildSymptomsWithVitals(),
         diagnosis: form.diagnosis,
         recordType: form.recordType,

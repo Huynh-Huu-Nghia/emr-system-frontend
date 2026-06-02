@@ -11,7 +11,7 @@ export interface MedicalRecord {
 }
 
 export interface MedicalRecordCreateRequest {
-  appointmentId: number
+  appointmentId: number | null
   symptoms: string
   diagnosis: string
   recordType: string
