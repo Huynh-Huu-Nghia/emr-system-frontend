@@ -20,7 +20,7 @@ export interface PrescriptionDetail {
 export interface PrescriptionCreateRequest {
   medicalRecordId: number
   notes: string
-  totalPrice: string
+  totalPrice: number
 }
 
 export interface PrescriptionDetailCreateRequest {

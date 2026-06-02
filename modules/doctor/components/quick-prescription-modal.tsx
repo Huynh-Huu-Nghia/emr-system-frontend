@@ -38,14 +38,13 @@ export function QuickPrescriptionModal({ open, onOpenChange }: { open: boolean; 
   })
 
   const navigateToExam = (patient: QueuePatientStub, templateId?: number) => {
-    const params = new URLSearchParams({
-      patientName: patient.patientName,
-      medicalHistoryNumber: patient.medicalHistoryNumber,
-      ...(patient.patientId != null ? { patientId: String(patient.patientId) } : {}),
-      ...(patient.appointmentId != null ? { appointmentId: String(patient.appointmentId) } : {}),
-      queueId: patient.id,
-      ...(templateId != null ? { templateId: String(templateId) } : {}),
-    })
+    const params = new URLSearchParams()
+    params.set("patientName", patient.patientName)
+    params.set("medicalHistoryNumber", patient.medicalHistoryNumber)
+    params.set("queueId", String(patient.id))
+    if (patient.patientId != null) params.set("patientId", String(patient.patientId))
+    if (patient.appointmentId != null) params.set("appointmentId", String(patient.appointmentId))
+    if (templateId != null) params.set("templateId", String(templateId))
     router.push(`${ROUTES.DOCTOR.EXAMINATION}?${params.toString()}`)
     onOpenChange(false)
     setSelectedPatient(null)

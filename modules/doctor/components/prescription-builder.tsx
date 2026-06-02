@@ -150,7 +150,7 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
       const result = await prescriptionService.create({
         medicalRecordId,
         notes,
-        totalPrice: String(totalPrice),
+        totalPrice: totalPrice,
       })
 
       for (const item of items) {
