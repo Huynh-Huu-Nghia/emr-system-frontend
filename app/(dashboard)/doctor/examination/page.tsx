@@ -132,6 +132,17 @@ export default function DoctorExaminationPage() {
   const appointmentId = searchParams.get("appointmentId")
   const queueId = searchParams.get("queueId")
 
+  const [step, setStep] = useState<"exam" | "prescription">("exam")
+  const [saving, setSaving] = useState(false)
+  const [createdRecordId, setCreatedRecordId] = useState<number | null>(null)
+
+  const [form, setForm] = useState<ExamFormData>({
+    symptoms: "",
+    diagnosis: "",
+    treatmentPlan: "",
+    recordType: "GENERAL",
+  })
+
   // Redirect nếu không có bệnh nhân
   if (!patientName) {
     return (
@@ -143,17 +154,6 @@ export default function DoctorExaminationPage() {
       </div>
     )
   }
-
-  const [step, setStep] = useState<"exam" | "prescription">("exam")
-  const [saving, setSaving] = useState(false)
-  const [createdRecordId, setCreatedRecordId] = useState<number | null>(null)
-
-  const [form, setForm] = useState<ExamFormData>({
-    symptoms: "",
-    diagnosis: "",
-    treatmentPlan: "",
-    recordType: "GENERAL",
-  })
 
   const handleFieldChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
