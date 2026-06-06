@@ -20,6 +20,7 @@ import {
 import type { Appointment, AppointmentStatus } from "@/core/api/appointmentService"
 import { ROUTES } from "@/constants/routes"
 import { usePatientsQuery } from "@/modules/patient/hooks/use-patients-query"
+import { useDoctorsQuery } from "@/modules/admin/hooks/use-doctors-query"
 import { useAppointmentsQuery } from "@/modules/appointment/hooks/use-appointments-query"
 import { useCancelAppointmentMutation } from "@/modules/appointment/hooks/use-appointment-mutations"
 import { AppointmentWeekStrip } from "@/modules/appointment/components/appointment-week-strip"
@@ -55,6 +56,7 @@ export default function ReceptionAppointmentsPage() {
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null)
 
   const { data: patients = [] } = usePatientsQuery()
+  const { data: doctors = [] } = useDoctorsQuery()
   const {
     data: appointments = [],
     isPending,
@@ -98,7 +100,7 @@ export default function ReceptionAppointmentsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Lịch hẹn"
-        description="Đặt, đổi hoặc huỷ lịch khám. Dữ liệu mock — thay `appointmentService` khi có API."
+        description="Đặt, đổi hoặc huỷ lịch khám."
       >
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" asChild className="rounded-full">
@@ -107,7 +109,7 @@ export default function ReceptionAppointmentsPage() {
           <Button
             className="rounded-full bg-medical-primary hover:bg-medical-dark"
             onClick={openCreate}
-            disabled={patients.length === 0}
+            disabled={patients.length === 0 || doctors.length === 0}
           >
             <Plus className="mr-2 h-4 w-4" />
             Đặt lịch mới
@@ -153,7 +155,8 @@ export default function ReceptionAppointmentsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Tất cả</SelectItem>
-              <SelectItem value="SCHEDULED">Đã đặt</SelectItem>
+              <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
+              <SelectItem value="CONFIRMED">Đã xác nhận</SelectItem>
               <SelectItem value="CANCELLED">Đã huỷ</SelectItem>
               <SelectItem value="COMPLETED">Hoàn tất</SelectItem>
             </SelectContent>
@@ -226,7 +229,7 @@ export default function ReceptionAppointmentsPage() {
                     <AppointmentStatusBadge status={a.status} />
                   </TableCell>
                   <TableCell className="pr-6 text-right">
-                    {a.status === "SCHEDULED" ? (
+                    {a.status === "PENDING" ? (
                       <div className="flex justify-end gap-1">
                         <Button
                           type="button"
@@ -267,6 +270,7 @@ export default function ReceptionAppointmentsPage() {
         mode={editorMode}
         appointment={editorAppointment}
         patients={patients}
+        doctors={doctors}
       />
 
       <ConfirmDialog

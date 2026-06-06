@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
@@ -26,8 +26,8 @@ import type { UserRecord } from "@/core/api/userService"
 const userSchema = z.object({
   username: z.string().min(3, "Tối thiểu 3 ký tự"),
   password: z.string().min(4, "Tối thiểu 4 ký tự").optional().or(z.literal("")),
-  role: z.enum(["ADMIN", "DOCTOR", "RECEPTIONIST", "PATIENT"]),
-  status: z.enum(["ACTIVE", "LOCKED"]),
+  role: z.enum(["ADMIN", "DOCTOR", "PATIENT"]),
+  status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED"]),
 })
 
 type UserFormValues = z.infer<typeof userSchema>
@@ -48,7 +48,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
     defaultValues: {
       username: "",
       password: "",
-      role: "RECEPTIONIST",
+      role: "PATIENT",
       status: "ACTIVE",
     },
   })
@@ -63,7 +63,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
           status: initialData.status,
         })
       } else {
-        form.reset({ username: "", password: "", role: "RECEPTIONIST", status: "ACTIVE" })
+        form.reset({ username: "", password: "", role: "PATIENT", status: "ACTIVE" })
       }
     }
   }, [open, initialData, form])
@@ -76,7 +76,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
       )
     } else {
       createMutation.mutate(
-        { username: values.username, passwordHash: values.password || "default", role: values.role, status: values.status },
+        { username: values.username, password: values.password || "default", role: values.role, status: values.status },
         { onSuccess: () => onOpenChange(false) }
       )
     }
@@ -129,7 +129,6 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
               <SelectContent>
                 <SelectItem value="ADMIN">Quản trị</SelectItem>
                 <SelectItem value="DOCTOR">Bác sĩ</SelectItem>
-                <SelectItem value="RECEPTIONIST">Lễ tân</SelectItem>
                 <SelectItem value="PATIENT">Bệnh nhân</SelectItem>
               </SelectContent>
             </Select>
@@ -146,7 +145,8 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                <SelectItem value="LOCKED">Đã khóa</SelectItem>
+                <SelectItem value="INACTIVE">Ngưng hoạt động</SelectItem>
+                <SelectItem value="BLOCKED">Đã khóa</SelectItem>
               </SelectContent>
             </Select>
           </div>

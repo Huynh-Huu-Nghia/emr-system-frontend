@@ -1,9 +1,10 @@
-import { apiFetch } from "@/shared/lib/api-client"
+﻿import { apiFetch } from "@/shared/lib/api-client"
 
-export type AppointmentStatus = "SCHEDULED" | "CANCELLED" | "COMPLETED"
+export type AppointmentStatus = "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
 
 export interface Appointment {
   id: number
+  doctor_id: number
   patient_id: number
   patient_name: string
   medical_history_number: string
@@ -14,6 +15,7 @@ export interface Appointment {
 }
 
 export interface AppointmentCreateRequest {
+  doctor_id: number
   patient_id: number
   patient_name: string
   medical_history_number: string
@@ -27,15 +29,23 @@ export interface AppointmentListResponse {
   total: number
 }
 
+function toTimestampString(iso: string): string {
+  // Convert ISO 8601 (e.g. "2024-06-01T09:00:00.000Z" or local) to "yyyy-MM-dd HH:mm:ss"
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 function mapAppointment(raw: Record<string, unknown>): Appointment {
   return {
     id: raw.id as number,
+    doctor_id: (raw.doctorId as number) || 0,
     patient_id: (raw.patientId as number) || 0,
     patient_name: (raw.patientName as string) || "",
     medical_history_number: `BN${String(raw.patientId || 0).padStart(3, "0")}`,
     starts_at: (raw.appointmentStartDate as string) || "",
     reason: (raw.reason as string) || null,
-    status: (raw.status as AppointmentStatus) || "SCHEDULED",
+    status: (raw.status as AppointmentStatus) || "PENDING",
     created_at: (raw.createdAt as string) || "",
   }
 }
@@ -53,40 +63,48 @@ export const appointmentService = {
   },
 
   async create(body: AppointmentCreateRequest): Promise<Appointment> {
+    const startTs = toTimestampString(body.starts_at)
     const res = await apiFetch("/api/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        doctorId: 1,
+        doctorId: body.doctor_id,
         patientId: body.patient_id,
-        appointmentStartDate: body.starts_at,
-        appointmentEndDate: body.starts_at,
+        appointmentStartDate: startTs,
+        appointmentEndDate: startTs,
         reason: body.reason || "",
-        status: "SCHEDULED",
+        status: "PENDING",
       }),
     })
     if (!res.ok) throw new Error("Failed to create appointment")
     const result = await res.json()
     return {
       id: result.id,
+      doctor_id: body.doctor_id,
       patient_id: body.patient_id,
       patient_name: body.patient_name,
       medical_history_number: body.medical_history_number,
       starts_at: body.starts_at,
       reason: body.reason ?? null,
-      status: "SCHEDULED",
+      status: "PENDING",
       created_at: new Date().toISOString(),
     }
   },
 
   async reschedule(id: number, starts_at: string, reason?: string | null): Promise<Appointment> {
+    const startTs = toTimestampString(starts_at)
     const res = await apiFetch(`/api/appointments/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "SCHEDULED" }),
+      body: JSON.stringify({
+        appointmentStartDate: startTs,
+        appointmentEndDate: startTs,
+        reason: reason ?? "",
+        status: "PENDING",
+      }),
     })
     if (!res.ok) throw new Error("Failed to reschedule")
-    return { id, patient_id: 0, patient_name: "", medical_history_number: "", starts_at, reason: reason ?? null, status: "SCHEDULED", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", medical_history_number: "", starts_at, reason: reason ?? null, status: "PENDING", created_at: "" }
   },
 
   async cancel(id: number): Promise<Appointment> {
@@ -96,6 +114,6 @@ export const appointmentService = {
       body: JSON.stringify({ status: "CANCELLED" }),
     })
     if (!res.ok) throw new Error("Failed to cancel appointment")
-    return { id, patient_id: 0, patient_name: "", medical_history_number: "", starts_at: "", reason: null, status: "CANCELLED", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", medical_history_number: "", starts_at: "", reason: null, status: "CANCELLED", created_at: "" }
   },
 }

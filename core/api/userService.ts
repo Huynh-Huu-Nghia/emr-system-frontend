@@ -3,14 +3,14 @@ import { apiFetch } from "@/shared/lib/api-client"
 export interface UserRecord {
   id: number
   username: string
-  role: "ADMIN" | "DOCTOR" | "RECEPTIONIST" | "PATIENT"
-  status: "ACTIVE" | "LOCKED"
+  role: "ADMIN" | "DOCTOR" | "PATIENT"
+  status: "ACTIVE" | "INACTIVE" | "BLOCKED"
   createdAt: string
 }
 
 export interface UserCreateRequest {
   username: string
-  passwordHash: string
+  password: string
   role: UserRecord["role"]
   status?: UserRecord["status"]
 }
@@ -33,7 +33,7 @@ export const userService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: data.username,
-        passwordHash: data.passwordHash,
+        password: data.password,
         role: data.role,
         status: data.status ?? "ACTIVE",
       }),

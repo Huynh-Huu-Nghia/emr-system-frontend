@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { Appointment } from "@/core/api/appointmentService"
+import type { DoctorRecord } from "@/core/api/doctorService"
 import type { Patient } from "@/modules/patient/types"
 import {
   fromDatetimeLocalValue,
@@ -42,6 +43,7 @@ import {
 type Mode = "create" | "reschedule"
 
 type FormValues = {
+  doctor_id?: string
   patient_id?: string
   starts_at_local: string
   reason?: string
@@ -50,12 +52,20 @@ type FormValues = {
 function buildSchema(mode: Mode) {
   return z
     .object({
+      doctor_id: z.string().optional(),
       patient_id: z.string().optional(),
       starts_at_local: z.string().min(1, "Chọn ngày giờ"),
       reason: z.string().optional(),
     })
     .superRefine((data, ctx) => {
       if (mode === "create") {
+        if (!data.doctor_id) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Chọn bác sĩ",
+            path: ["doctor_id"],
+          })
+        }
         if (!data.patient_id) {
           ctx.addIssue({
             code: "custom",
@@ -73,6 +83,7 @@ type AppointmentEditorDialogProps = {
   mode: Mode
   appointment?: Appointment | null
   patients: Patient[]
+  doctors: DoctorRecord[]
 }
 
 export function AppointmentEditorDialog({
@@ -81,6 +92,7 @@ export function AppointmentEditorDialog({
   mode,
   appointment,
   patients,
+  doctors,
 }: AppointmentEditorDialogProps) {
   const createMut = useCreateAppointmentMutation()
   const rescheduleMut = useRescheduleAppointmentMutation()
@@ -91,6 +103,7 @@ export function AppointmentEditorDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      doctor_id: "",
       patient_id: "",
       starts_at_local: "",
       reason: "",
@@ -101,6 +114,7 @@ export function AppointmentEditorDialog({
     if (!open) return
     if (mode === "reschedule" && appointment) {
       form.reset({
+        doctor_id: String(appointment.doctor_id),
         patient_id: String(appointment.patient_id),
         starts_at_local: toDatetimeLocalValue(appointment.starts_at),
         reason: appointment.reason ?? "",
@@ -110,21 +124,24 @@ export function AppointmentEditorDialog({
       base.setMinutes(0, 0, 0)
       base.setHours(base.getHours() + 1)
       form.reset({
+        doctor_id: doctors[0] ? String(doctors[0].id) : "",
         patient_id: patients[0] ? String(patients[0].id) : "",
         starts_at_local: toDatetimeLocalValue(base.toISOString()),
         reason: "",
       })
     }
-  }, [open, mode, appointment, patients, form])
+  }, [open, mode, appointment, patients, doctors, form])
 
   const onSubmit = async (values: FormValues) => {
     const iso = fromDatetimeLocalValue(values.starts_at_local)
     try {
       if (mode === "create") {
         const pid = Number(values.patient_id ?? "")
+        const did = Number(values.doctor_id ?? "")
         const p = patients.find((x) => x.id === pid)
         if (!p) throw new Error("Bệnh nhân không hợp lệ")
         await createMut.mutateAsync({
+          doctor_id: did,
           patient_id: pid,
           patient_name: p.full_name,
           medical_history_number: p.medicalHistoryNumber,
@@ -159,36 +176,68 @@ export function AppointmentEditorDialog({
             className="space-y-4 px-6 py-4"
           >
             {mode === "create" ? (
-              <FormField
-                control={form.control}
-                name="patient_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold text-slate-600">
-                      Bệnh nhân
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={patients.length === 0}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Chọn bệnh nhân" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((p) => (
-                          <SelectItem key={p.id} value={String(p.id)}>
-                            {p.full_name} · #{p.medicalHistoryNumber}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="doctor_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-slate-600">
+                        Bác sĩ
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={doctors.length === 0}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn bác sĩ" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {doctors.map((d) => (
+                            <SelectItem key={d.id} value={String(d.id)}>
+                              {d.fullName} · {d.specialty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="patient_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-slate-600">
+                        Bệnh nhân
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={patients.length === 0}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn bệnh nhân" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {patients.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              {p.full_name} · #{p.medicalHistoryNumber}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             ) : appointment ? (
               <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
                 <span className="font-semibold">{appointment.patient_name}</span>
