@@ -196,29 +196,27 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
           </div>
 
           {filteredMedicines.length > 0 && (
-            <ul className="mt-3 max-h-64 space-y-1 overflow-y-auto">
-              {filteredMedicines.map((med) => (
-                <li
-                  key={med.id}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="font-medium text-slate-700">{med.name}</p>
-                    <p className="text-xs text-slate-400">
-                      {med.unit} — {med.price.toLocaleString("vi-VN")}đ — Tồn: {med.stockQuantity}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+            <div className="absolute left-0 right-0 z-50 mt-1 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+              {filteredMedicines.map((med) => {
+                const alreadyAdded = items.some((i) => i.medicineId === med.id)
+                return (
+                  <button
+                    key={med.id}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed border-b border-slate-100 last:border-b-0"
                     onClick={() => handleAddMedicine(med)}
-                    disabled={items.some((i) => i.medicineId === med.id)}
+                    disabled={alreadyAdded}
                   >
-                    <Plus className="h-4 w-4 text-medical-primary" />
-                  </Button>
-                </li>
-              ))}
-            </ul>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-base font-medium text-slate-800">{med.name}</p>
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        {med.unit} · {med.price.toLocaleString("vi-VN")}đ · Tồn: {med.stockQuantity}
+                      </p>
+                    </div>
+                    <Plus className={`h-5 w-5 flex-shrink-0 ${alreadyAdded ? "text-slate-300" : "text-medical-primary"}`} />
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
 

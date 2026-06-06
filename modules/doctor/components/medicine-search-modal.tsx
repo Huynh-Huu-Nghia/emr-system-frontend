@@ -66,8 +66,9 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
 
   return (
     <MasterModal open={open} onOpenChange={onOpenChange}>
-      <MasterModalContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+      <MasterModalContent className="w-full sm:max-w-4xl lg:max-w-6xl max-h-[92vh] overflow-hidden flex flex-col p-0">
         <MasterModalHeader
+          className="px-6 pt-5 pb-4 flex-shrink-0"
           title={
             <div className="flex items-center gap-2">
               <Pill className="h-5 w-5 text-medical-primary" />
@@ -76,23 +77,24 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
           }
         />
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-hidden flex flex-col px-6 pb-6 gap-4">
           {/* Search box */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <div className="relative flex-shrink-0">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm theo tên thuốc..."
-              className="pl-10 h-11"
+              className="pl-12 h-12 text-base"
               autoFocus
             />
             {search && (
               <Button
                 variant="ghost"
                 size="sm"
+                type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -100,59 +102,60 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
           </div>
 
           {/* Category tabs */}
-          <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Danh mục thuốc</h3>
+          <div className="flex-shrink-0">
+            <h3 className="text-sm font-semibold text-slate-700 mb-2">Danh mục thuốc</h3>
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedCategory === null ? "default" : "outline"}
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setSelectedCategory(null)}
-                className={
+                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                   selectedCategory === null
-                    ? "bg-medical-primary text-white hover:bg-medical-dark"
-                    : ""
-                }
+                    ? "bg-medical-primary text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
               >
                 Tất cả
-              </Button>
+              </button>
               {categories.map((cat) => (
-                <Button
+                <button
                   key={cat.id}
-                  variant={selectedCategory === cat.id ? "default" : "outline"}
-                  size="sm"
+                  type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={
+                  className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     selectedCategory === cat.id
-                      ? "bg-medical-primary text-white hover:bg-medical-dark"
-                      : ""
-                  }
+                      ? "bg-medical-primary text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
                 >
                   {cat.nameVi}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Results */}
-          <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">
+          {/* Results count */}
+          <div className="flex-shrink-0">
+            <h3 className="text-sm font-semibold text-slate-700">
               Kết quả ({filtered.length} thuốc)
             </h3>
+          </div>
 
+          {/* Scrollable results grid */}
+          <div className="flex-1 overflow-y-auto pr-2 [scrollbar-gutter:stable]">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-medical-primary" />
               </div>
             ) : filtered.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-16">
                 <Package className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <p className="text-slate-500">Không tìm thấy thuốc nào</p>
+                <p className="text-slate-500 text-base">Không tìm thấy thuốc nào</p>
                 <p className="text-sm text-slate-400 mt-1">
                   Thử thay đổi từ khóa hoặc danh mục
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-2">
                 {filtered.map((med) => {
                   const outOfStock = med.stockQuantity <= 0
                   const lowStock = med.stockQuantity > 0 && med.stockQuantity <= 10
@@ -175,19 +178,19 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
                       )}
 
                       {/* Name */}
-                      <h4 className="font-semibold text-slate-800 pr-16 mb-2 text-sm leading-tight">
+                      <h4 className="font-semibold text-slate-800 pr-16 mb-2 text-[15px] leading-snug">
                         {med.name}
                       </h4>
 
                       {/* Details */}
-                      <div className="space-y-0.5 text-xs">
+                      <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span className="text-slate-500">Đơn vị:</span>
                           <span className="font-medium text-slate-700">{med.unit}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Đơn giá:</span>
-                          <span className="font-medium text-medical-primary">
+                          <span className="font-semibold text-medical-primary">
                             {med.price.toLocaleString("vi-VN")}đ
                           </span>
                         </div>
@@ -209,8 +212,8 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
 
                       {/* Low stock warning */}
                       {lowStock && (
-                        <div className="mt-2 flex items-center gap-1 text-xs text-amber-600">
-                          <AlertCircle className="h-3 w-3" />
+                        <div className="mt-2 flex items-center gap-1 text-sm text-amber-600">
+                          <AlertCircle className="h-3.5 w-3.5" />
                           <span>Sắp hết hàng</span>
                         </div>
                       )}
@@ -219,13 +222,14 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
                       {!outOfStock && (
                         <Button
                           size="sm"
-                          className="w-full mt-3 bg-medical-primary text-white hover:bg-medical-dark h-8 text-xs"
+                          type="button"
+                          className="w-full mt-3 bg-medical-primary text-white hover:bg-medical-dark h-9 text-sm font-medium"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleSelect(med)
                           }}
                         >
-                          <Plus className="mr-1 h-3 w-3" />
+                          <Plus className="mr-1.5 h-4 w-4" />
                           Thêm vào đơn
                         </Button>
                       )}
@@ -237,8 +241,8 @@ export function MedicineSearchModal({ open, onOpenChange, onMedicineSelect, excl
           </div>
         </div>
 
-        <MasterModalFooter className="justify-end">
-          <MasterModalAction variant="secondary" onClick={handleClose}>
+        <MasterModalFooter className="px-6 py-3 flex-shrink-0 justify-end">
+          <MasterModalAction variant="secondary" type="button" onClick={handleClose}>
             Đóng
           </MasterModalAction>
         </MasterModalFooter>
