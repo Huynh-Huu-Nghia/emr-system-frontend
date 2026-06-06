@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner"
 import { Save, ArrowRight, ArrowLeft } from "lucide-react"
 import { medicalRecordService } from "@/core/api/medicalRecordService"
+import { queueService } from "@/core/api/queueService"
 import { ROUTES } from "@/constants/routes"
 
 type RecordType = "GENERAL" | "PEDIATRICS" | "DENTAL" | "CARDIOLOGY" | "DERMATOLOGY"
@@ -129,6 +130,7 @@ export default function DoctorExaminationPage() {
   const patientName = searchParams.get("patientName")
   const medicalHistoryNumber = searchParams.get("medicalHistoryNumber") ?? ""
   const appointmentId = searchParams.get("appointmentId")
+  const queueId = searchParams.get("queueId")
 
   // Redirect nếu không có bệnh nhân
   if (!patientName) {
@@ -194,7 +196,15 @@ export default function DoctorExaminationPage() {
     }
   }
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    // Remove patient from queue after examination
+    if (queueId) {
+      try {
+        await queueService.remove(Number(queueId))
+      } catch {
+        // Queue removal failure shouldn't block the flow
+      }
+    }
     toast.success("Hoàn tất khám bệnh")
     router.push(ROUTES.DOCTOR.DASHBOARD)
   }
