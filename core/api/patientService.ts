@@ -78,18 +78,7 @@ export const patientService = {
       throw new Error(err.error || "Failed to create patient")
     }
     const result = await res.json()
-    return {
-      id: result.id,
-      user_id: null,
-      full_name: data.full_name,
-      dob: data.dob,
-      gender: data.gender,
-      phone: data.phone,
-      address: data.address,
-      insurance_code: data.insurance_code,
-      medicalHistoryNumber: `BN${String(result.id).padStart(3, "0")}`,
-      created_at: new Date().toISOString(),
-    }
+    return mapPatient(result)
   },
 
   async updatePatient(id: number, data: Partial<PatientCreateRequest>): Promise<Patient> {

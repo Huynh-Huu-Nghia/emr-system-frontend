@@ -6,8 +6,13 @@ export interface QueueItem {
   patientName: string
   medicalHistoryNumber: string
   appointmentId: number | null
-  source: "REGISTERED" | "WALK_IN"
+  source: "REGISTERED" | "WALK_IN" | "APPOINTMENT"
   status: string
+  position?: number
+  doctorId?: number | null
+  doctorName?: string
+  appointmentTime?: string
+  reason?: string
   enqueuedAt: string
 }
 

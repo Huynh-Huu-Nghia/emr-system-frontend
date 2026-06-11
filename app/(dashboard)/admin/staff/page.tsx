@@ -39,7 +39,7 @@ export default function AdminStaffPage() {
   }
 
   const handleToggleLock = (user: UserRecord) => {
-    const newStatus = user.status === "ACTIVE" ? "LOCKED" : "ACTIVE"
+    const newStatus = user.status === "ACTIVE" ? "BLOCKED" : "ACTIVE"
     updateMutation.mutate({ id: user.id, data: { role: user.role, status: newStatus } })
   }
 

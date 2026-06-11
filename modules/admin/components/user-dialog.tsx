@@ -26,7 +26,7 @@ import type { UserRecord } from "@/core/api/userService"
 const userSchema = z.object({
   username: z.string().min(3, "Tối thiểu 3 ký tự"),
   password: z.string().min(4, "Tối thiểu 4 ký tự").optional().or(z.literal("")),
-  role: z.enum(["ADMIN", "DOCTOR", "PATIENT"]),
+  role: z.enum(["ADMIN", "RECEPTIONIST", "DOCTOR", "PATIENT"]),
   status: z.enum(["ACTIVE", "INACTIVE", "BLOCKED"]),
 })
 
@@ -128,6 +128,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ADMIN">Quản trị</SelectItem>
+                <SelectItem value="RECEPTIONIST">Tiếp tân</SelectItem>
                 <SelectItem value="DOCTOR">Bác sĩ</SelectItem>
                 <SelectItem value="PATIENT">Bệnh nhân</SelectItem>
               </SelectContent>

@@ -7,7 +7,10 @@ export interface Appointment {
   doctor_id: number
   patient_id: number
   patient_name: string
+  doctor_name: string
   medical_history_number: string
+  queue_id: number | null
+  queue_position: number | null
   starts_at: string
   reason: string | null
   status: AppointmentStatus
@@ -42,7 +45,10 @@ function mapAppointment(raw: Record<string, unknown>): Appointment {
     doctor_id: (raw.doctorId as number) || 0,
     patient_id: (raw.patientId as number) || 0,
     patient_name: (raw.patientName as string) || "",
+    doctor_name: (raw.doctorName as string) || "",
     medical_history_number: `BN${String(raw.patientId || 0).padStart(3, "0")}`,
+    queue_id: (raw.queueId as number) ?? null,
+    queue_position: (raw.queuePosition as number) ?? null,
     starts_at: (raw.appointmentStartDate as string) || "",
     reason: (raw.reason as string) || null,
     status: (raw.status as AppointmentStatus) || "PENDING",
@@ -83,7 +89,10 @@ export const appointmentService = {
       doctor_id: body.doctor_id,
       patient_id: body.patient_id,
       patient_name: body.patient_name,
+      doctor_name: "",
       medical_history_number: body.medical_history_number,
+      queue_id: null,
+      queue_position: null,
       starts_at: body.starts_at,
       reason: body.reason ?? null,
       status: "PENDING",
@@ -104,7 +113,7 @@ export const appointmentService = {
       }),
     })
     if (!res.ok) throw new Error("Failed to reschedule")
-    return { id, doctor_id: 0, patient_id: 0, patient_name: "", medical_history_number: "", starts_at, reason: reason ?? null, status: "PENDING", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at, reason: reason ?? null, status: "PENDING", created_at: "" }
   },
 
   async cancel(id: number): Promise<Appointment> {
@@ -114,6 +123,6 @@ export const appointmentService = {
       body: JSON.stringify({ status: "CANCELLED" }),
     })
     if (!res.ok) throw new Error("Failed to cancel appointment")
-    return { id, doctor_id: 0, patient_id: 0, patient_name: "", medical_history_number: "", starts_at: "", reason: null, status: "CANCELLED", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at: "", reason: null, status: "CANCELLED", created_at: "" }
   },
 }

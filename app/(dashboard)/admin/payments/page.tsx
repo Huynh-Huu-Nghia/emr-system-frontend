@@ -189,7 +189,7 @@ export default function AdminPaymentsPage() {
         loading={confirmMutation.isPending}
         onConfirm={() => {
           if (!confirmTarget) return
-          confirmMutation.mutate(confirmTarget.id, { onSuccess: () => setConfirmTarget(null) })
+          confirmMutation.mutate(confirmTarget.prescriptionId, { onSuccess: () => setConfirmTarget(null) })
         }}
       />
     </div>

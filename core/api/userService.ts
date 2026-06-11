@@ -3,7 +3,7 @@ import { apiFetch } from "@/shared/lib/api-client"
 export interface UserRecord {
   id: number
   username: string
-  role: "ADMIN" | "DOCTOR" | "PATIENT"
+  role: "ADMIN" | "DOCTOR" | "RECEPTIONIST" | "PATIENT"
   status: "ACTIVE" | "INACTIVE" | "BLOCKED"
   createdAt: string
 }
@@ -27,7 +27,7 @@ export const userService = {
     return res.json()
   },
 
-  async create(data: UserCreateRequest): Promise<{ id: number }> {
+  async create(data: UserCreateRequest): Promise<UserRecord> {
     const res = await apiFetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -42,7 +42,7 @@ export const userService = {
     return res.json()
   },
 
-  async update(id: number, data: UserUpdateRequest): Promise<{ status: string }> {
+  async update(id: number, data: UserUpdateRequest): Promise<UserRecord> {
     const res = await apiFetch(`/api/users/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
