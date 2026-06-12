@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { authService, AUTH_USER_KEY, type User, type LoginRequest } from "@/core/api/authService"
+import { authService, AUTH_TOKEN_KEY, AUTH_USER_KEY, type User, type LoginRequest } from "@/core/api/authService"
 import { useRouter } from "next/navigation"
 import { ROUTES } from "@/constants/routes"
 import { toast } from "sonner"
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: LoginRequest): Promise<User | null> => {
     const response = await authService.login(credentials)
     if (response.success && response.user && response.token) {
-      localStorage.setItem("auth_token", response.token)
+      localStorage.setItem(AUTH_TOKEN_KEY, response.token)
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(response.user))
       setUser(response.user)
       toast.success(response.message, {
@@ -48,10 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await authService.logout()
-    localStorage.removeItem("auth_token")
+    localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_USER_KEY)
     setUser(null)
-    router.push(ROUTES.LOGIN)
+    setIsLoading(false)
+    router.replace(ROUTES.LOGIN)
     toast.success("Đã đăng xuất")
   }
 

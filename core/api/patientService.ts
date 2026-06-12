@@ -21,6 +21,8 @@ export interface PatientCreateRequest {
   address?: string
   insurance_code?: string
   user_id?: number | null
+  username?: string
+  password?: string
 }
 
 export interface PatientListResponse {
@@ -49,7 +51,14 @@ export const patientService = {
     const res = await apiFetch("/api/patients")
     if (!res.ok) throw new Error("Failed to fetch patients")
     const raw = await res.json()
-    const data: Patient[] = (raw as Record<string, unknown>[]).map(mapPatient)
+    const data: Patient[] = (raw as Record<string, unknown>[])
+      .map(mapPatient)
+      .sort((a, b) => {
+        const createdDiff =
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        if (!Number.isNaN(createdDiff) && createdDiff !== 0) return createdDiff
+        return b.id - a.id
+      })
     return { success: true, data, total: data.length }
   },
 
@@ -71,6 +80,8 @@ export const patientService = {
         phone: data.phone,
         address: data.address || "",
         insuranceCode: data.insurance_code || "",
+        username: data.username || "",
+        password: data.password || "",
       }),
     })
     if (!res.ok) {

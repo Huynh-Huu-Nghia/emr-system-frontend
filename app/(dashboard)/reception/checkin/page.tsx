@@ -17,12 +17,25 @@ import {
 import { ROUTES } from "@/constants/routes"
 import { usePatientsQuery } from "@/modules/patient/hooks/use-patients-query"
 import { useAppointmentsQuery } from "@/modules/appointment/hooks/use-appointments-query"
-import { pushToQueue, useListenQueue } from "@/shared/queue/queue-stub"
+import { pushToQueue, useCallQueueMutation, useListenQueue } from "@/shared/queue/queue-stub"
 import { formatDateTimeVi, formatDateVi } from "@/shared/lib/format/date"
 import { cn } from "@/lib/utils"
 import type { Appointment } from "@/core/api/appointmentService"
 
-const NO_APPOINTMENT = "__none__"
+const NO_APPOINTMENT = "__none__"
+
+function queueStatusLabel(status?: string) {
+  switch ((status || "").toUpperCase()) {
+    case "CALLED":
+      return "Đã gọi"
+    case "IN_PROGRESS":
+      return "Đang khám"
+    case "DONE":
+      return "Hoàn tất"
+    default:
+      return "Đang chờ"
+  }
+}
 
 function isSameLocalCalendarDay(iso: string, ref: Date = new Date()) {
   const d = new Date(iso)
@@ -34,8 +47,9 @@ function isSameLocalCalendarDay(iso: string, ref: Date = new Date()) {
 }
 
 export default function ReceptionCheckinPage() {
-  const queue = useListenQueue()
-  const { data: patients = [] } = usePatientsQuery()
+  const queue = useListenQueue()
+  const callQueue = useCallQueueMutation()
+  const { data: patients = [] } = usePatientsQuery()
   const { data: appointments = [] } = useAppointmentsQuery()
 
   const [mode, setMode] = useState<"registered" | "walkin">("registered")
@@ -285,26 +299,38 @@ export default function ReceptionCheckinPage() {
                       <span
                         className={cn(
                           "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                          q.source === "REGISTERED"
-                            ? "bg-emerald-50 text-emerald-800"
-                            : "bg-amber-50 text-amber-900"
+                          q.source !== "WALK_IN"
+                            ? "bg-emerald-50 text-emerald-800"
+                            : "bg-amber-50 text-amber-900"
                         )}
                       >
-                        {q.source === "REGISTERED" ? "Hồ sơ" : "Vãng lai"}
+                        {q.source !== "WALK_IN" ? "Hồ sơ" : "Vãng lai"}
                       </span>
                     ) : null}
                   </div>
-                  <div className="flex flex-wrap gap-x-3 text-xs text-slate-400">
-                    <span>{formatDateVi(q.enqueuedAt)}</span>
-                    {q.patientId != null ? (
-                      <span>BN id: {q.patientId}</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-400">
+                    <span>{formatDateVi(q.enqueuedAt)}</span>
+                    {q.patientId != null ? (
+                      <span>BN id: {q.patientId}</span>
                     ) : null}
-                    {q.appointmentId != null ? (
-                      <span>Lịch: {q.appointmentId}</span>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+                    {q.appointmentId != null ? (
+                      <span>Lịch: {q.appointmentId}</span>
+                    ) : null}
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
+                      {queueStatusLabel(q.status)}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={q.status === "CALLED" ? "secondary" : "outline"}
+                    disabled={callQueue.isPending || q.status === "IN_PROGRESS"}
+                    onClick={() => callQueue.mutate(q.id)}
+                  >
+                    {q.status === "CALLED" ? "Gọi lại" : "Gọi vào khám"}
+                  </Button>
+                </li>
+              ))}
             </ul>
           )}
         </div>

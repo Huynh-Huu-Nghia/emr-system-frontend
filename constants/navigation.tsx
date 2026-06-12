@@ -27,6 +27,7 @@ export const SIDEBAR_MENU: Record<"reception" | "doctor" | "admin", MenuItem[]> 
     { label: "Bệnh nhân", href: ROUTES.RECEPTION.PATIENTS, icon: Users },
     { label: "Tiếp đón", href: ROUTES.RECEPTION.CHECKIN, icon: DoorOpen },
     { label: "Lịch hẹn", href: ROUTES.RECEPTION.APPOINTMENTS, icon: CalendarDays },
+    { label: "Thanh toán", href: ROUTES.RECEPTION.PAYMENTS, icon: CreditCard },
   ],
   doctor: [
     { label: "Dashboard", href: ROUTES.DOCTOR.DASHBOARD, icon: LayoutDashboard },

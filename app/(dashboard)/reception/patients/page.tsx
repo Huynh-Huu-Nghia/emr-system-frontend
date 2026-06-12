@@ -94,6 +94,7 @@ export default function PatientsPage() {
           patients={patients}
           filteredPatients={filteredPatients}
           deletePending={deleteMutation.isPending}
+          canDelete={false}
           onEdit={(p) => handleOpenDialog(p)}
           onView={setViewTarget}
           onDeleteRequest={setDeleteTarget}

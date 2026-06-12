@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select"
 import { GENDER_LABELS } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
-import { User, Phone, MapPin, Calendar, ShieldCheck } from "lucide-react"
+import { User, Phone, MapPin, Calendar, ShieldCheck, KeyRound } from "lucide-react"
 import type { Patient } from "@/modules/patient/types"
 import { patientFormSchema, type PatientFormValues } from "@/modules/patient/schemas/patient-form-schema"
 import { useCreatePatientMutation } from "@/modules/patient/hooks/use-create-patient-mutation"
@@ -61,8 +61,13 @@ export function PatientDialog({
       phone: "",
       address: "",
       insurance_code: "",
+      create_account: false,
+      username: "",
+      password: "",
     },
   })
+
+  const createAccount = form.watch("create_account")
 
   React.useEffect(() => {
     if (!isOpen) return
@@ -74,6 +79,9 @@ export function PatientDialog({
         phone: initialData.phone,
         address: initialData.address || "",
         insurance_code: initialData.insurance_code || "",
+        create_account: false,
+        username: "",
+        password: "",
       })
     } else {
       form.reset({
@@ -83,6 +91,9 @@ export function PatientDialog({
         phone: "",
         address: "",
         insurance_code: "",
+        create_account: false,
+        username: "",
+        password: "",
       })
     }
   }, [isOpen, initialData, form])
@@ -92,7 +103,11 @@ export function PatientDialog({
       if (initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data: values })
       } else {
-        await createMutation.mutateAsync(values)
+        await createMutation.mutateAsync({
+          ...values,
+          username: values.create_account ? values.username?.trim() : "",
+          password: values.create_account ? values.password : "",
+        })
       }
       onSuccess?.()
       onClose()
@@ -261,6 +276,74 @@ export function PatientDialog({
                 </FormItem>
               )}
             />
+
+            {!initialData ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <FormField
+                  control={form.control}
+                  name="create_account"
+                  render={({ field }) => (
+                    <FormItem>
+                      <label className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(field.value)}
+                          onChange={(event) => field.onChange(event.target.checked)}
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-medical-primary"
+                        />
+                        <span>
+                          Tạo tài khoản đăng nhập cho bệnh nhân
+                          <span className="mt-1 block text-xs font-normal text-slate-500">
+                            Chỉ bật khi bệnh nhân cần tra cứu thông tin qua hệ thống.
+                          </span>
+                        </span>
+                      </label>
+                    </FormItem>
+                  )}
+                />
+
+                {createAccount ? (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            Tên đăng nhập
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input {...field} className={inputStyle} placeholder="patient_a" />
+                              <User className="pointer-events-none absolute right-0 top-2 h-4 w-4 text-slate-300" />
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-[11px]" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            Mật khẩu
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input {...field} type="password" className={inputStyle} placeholder="Tối thiểu 6 ký tự" />
+                              <KeyRound className="pointer-events-none absolute right-0 top-2 h-4 w-4 text-slate-300" />
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-[11px]" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             <DialogFooter className="-mx-6 -mb-6 mt-6 gap-3 bg-slate-50 p-6">
               <Button

@@ -25,8 +25,9 @@ export interface PushToQueuePayload {
 }
 
 export const queueService = {
-  async getQueue(): Promise<QueueItem[]> {
-    const res = await apiFetch("/api/queue")
+  async getQueue(doctorId?: number | null): Promise<QueueItem[]> {
+    const query = doctorId ? `?doctorId=${doctorId}` : ""
+    const res = await apiFetch(`/api/queue${query}`)
     if (!res.ok) throw new Error("Failed to fetch queue")
     return res.json()
   },
@@ -54,6 +55,18 @@ export const queueService = {
       body: JSON.stringify({ patientId }),
     })
     if (!res.ok) throw new Error("Failed to update patient ID")
+  },
+
+  async call(queueId: number): Promise<QueueItem> {
+    const res = await apiFetch(`/api/queue/${queueId}/call`, { method: "POST" })
+    if (!res.ok) throw new Error("Failed to call queue item")
+    return res.json()
+  },
+
+  async start(queueId: number): Promise<QueueItem> {
+    const res = await apiFetch(`/api/queue/${queueId}/start`, { method: "POST" })
+    if (!res.ok) throw new Error("Failed to start queue item")
+    return res.json()
   },
 
   async remove(queueId: number): Promise<void> {

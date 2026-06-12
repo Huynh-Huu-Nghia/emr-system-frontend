@@ -23,6 +23,7 @@ type PatientsTableProps = {
   patients: Patient[]
   filteredPatients: Patient[]
   deletePending: boolean
+  canDelete?: boolean
   onEdit: (patient: Patient) => void
   onView: (patient: Patient) => void
   onDeleteRequest: (patient: Patient) => void
@@ -36,6 +37,7 @@ export function PatientsTable({
   patients,
   filteredPatients,
   deletePending,
+  canDelete = true,
   onEdit,
   onView,
   onDeleteRequest,
@@ -146,15 +148,17 @@ export function PatientsTable({
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  disabled={deletePending}
-                  onClick={() => onDeleteRequest(p)}
-                  className="rounded-full shadow-none"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canDelete ? (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    disabled={deletePending}
+                    onClick={() => onDeleteRequest(p)}
+                    className="rounded-full shadow-none"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
               </TableCell>
             </TableRow>
           ))

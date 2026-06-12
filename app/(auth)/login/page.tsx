@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Activity, Lock, User } from "lucide-react"
+import { Activity, Eye, EyeOff, User } from "lucide-react"
 import { toast } from "sonner"
 import type { LoginRequest } from "@/core/api/authService"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState<LoginRequest>({
     username: "",
     password: "",
@@ -29,10 +30,7 @@ export default function LoginPage() {
     try {
       const user = await login(formData)
       if (user) {
-        setTimeout(
-          () => router.push(getPostLoginPathForRole(user.role)),
-          600
-        )
+        router.replace(getPostLoginPathForRole(user.role))
       }
     } catch (error) {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại", {
@@ -95,15 +93,27 @@ export default function LoginPage() {
 
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Mật khẩu"
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="h-12 w-full border-b-2 border-slate-200 bg-transparent px-2 pb-2 text-lg text-slate-700 outline-none transition-colors focus:border-medical-primary"
+                className="h-12 w-full border-b-2 border-slate-200 bg-transparent px-2 pb-2 pr-12 text-lg text-slate-700 outline-none transition-colors focus:border-medical-primary"
               />
-              <Lock className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <button
+                type="button"
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-medical-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medical-primary/30"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             <Button

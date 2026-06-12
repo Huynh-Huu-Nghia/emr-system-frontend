@@ -27,6 +27,37 @@ export interface LogoutResponse {
 }
 
 const AUTH_USER_KEY = "auth_user"
+const AUTH_TOKEN_KEY = "auth_token"
+
+function normalizeDashboardRole(role: unknown): User["role"] | null {
+  if (typeof role !== "string") return null
+
+  const normalized = role.trim().toUpperCase()
+  if (normalized === "ADMIN") return "ADMIN"
+  if (normalized === "DOCTOR") return "DOCTOR"
+  if (normalized === "RECEPTIONIST" || normalized === "RECEPTION") return "RECEPTIONIST"
+
+  return null
+}
+
+function isDashboardRole(role: unknown): role is User["role"] {
+  return normalizeDashboardRole(role) !== null
+}
+
+function isUser(value: unknown): value is User {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "role" in value &&
+    isDashboardRole((value as { role: unknown }).role)
+  )
+}
+
+function clearStoredAuth() {
+  if (typeof window === "undefined") return
+  localStorage.removeItem(AUTH_TOKEN_KEY)
+  localStorage.removeItem(AUTH_USER_KEY)
+}
 
 const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
@@ -36,6 +67,24 @@ const authService = {
       body: JSON.stringify(credentials),
     })
     const data = await res.json()
+    if (data.success && data.user) {
+      const role = normalizeDashboardRole(data.user.role)
+      if (!role) {
+        return {
+          success: false,
+          message: `Vai trò ${data.user.role ?? "không xác định"} chưa được phép truy cập hệ thống`,
+        }
+      }
+
+      return {
+        ...data,
+        user: {
+          ...data.user,
+          role,
+        },
+      }
+    }
+
     return data
   },
 
@@ -46,7 +95,7 @@ const authService = {
   async getCurrentUser(): Promise<User | null> {
     const token =
       typeof window !== "undefined"
-        ? localStorage.getItem("auth_token")
+        ? localStorage.getItem(AUTH_TOKEN_KEY)
         : null
     if (!token) return null
     const raw =
@@ -55,13 +104,23 @@ const authService = {
         : null
     if (raw) {
       try {
-        return JSON.parse(raw) as User
+        const user = JSON.parse(raw) as unknown
+        if (isUser(user)) {
+          return {
+            ...user,
+            role: normalizeDashboardRole(user.role) ?? user.role,
+          }
+        }
+        clearStoredAuth()
+        return null
       } catch {
-        /* fall through */
+        clearStoredAuth()
+        return null
       }
     }
+    clearStoredAuth()
     return null
   },
 }
 
-export { authService, AUTH_USER_KEY }
+export { authService, AUTH_USER_KEY, AUTH_TOKEN_KEY, clearStoredAuth, isDashboardRole }

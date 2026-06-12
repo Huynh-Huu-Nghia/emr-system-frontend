@@ -4,15 +4,17 @@ import { useRouter } from "next/navigation"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Stethoscope, Clock, UserCheck } from "lucide-react"
-import { useListenQueue, type QueuePatientStub } from "@/shared/queue/queue-stub"
+import { useListenQueue, useStartQueueMutation, type QueuePatientStub } from "@/shared/queue/queue-stub"
 import { formatDateVi } from "@/shared/lib/format/date"
 import { ROUTES } from "@/constants/routes"
 
 export default function DoctorDashboardPage() {
   const queue = useListenQueue()
+  const startQueue = useStartQueueMutation()
   const router = useRouter()
 
-  const handleStartExam = (patient: QueuePatientStub) => {
+  const handleStartExam = async (patient: QueuePatientStub) => {
+    await startQueue.mutateAsync(patient.id)
     const params = new URLSearchParams()
     params.set("patientName", patient.patientName)
     params.set("medicalHistoryNumber", patient.medicalHistoryNumber)
@@ -67,11 +69,12 @@ export default function DoctorDashboardPage() {
               </div>
 
               <Button
-                onClick={() => handleStartExam(patient)}
+                disabled={startQueue.isPending || patient.status !== "CALLED"}
+                onClick={() => void handleStartExam(patient)}
                 className="mt-auto h-10 w-full rounded-xl bg-medical-primary text-white shadow-sm hover:bg-medical-dark"
               >
                 <Stethoscope className="mr-2 h-4 w-4" />
-                Bắt đầu khám
+                {patient.status === "CALLED" ? "Bắt đầu khám" : "Chờ lễ tân gọi"}
               </Button>
             </div>
           ))}

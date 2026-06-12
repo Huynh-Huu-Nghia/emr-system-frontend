@@ -3,7 +3,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 // ✅ Menu items tách ra constants — không hardcode trong component
 import { SIDEBAR_MENU } from "@/constants/navigation"
-import { SidebarFooter } from "@/components/layout/sidebar-footer"
 
 export function Sidebar() {
   const pathname = usePathname() ?? ""
@@ -61,7 +60,6 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <SidebarFooter />
     </aside>
   )
 }

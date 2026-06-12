@@ -1,6 +1,7 @@
 import { apiFetch } from "@/shared/lib/api-client"
 
 export interface PaymentRecord {
+  rowKey: string
   id: number
   prescriptionId: number
   patientName: string
@@ -43,11 +44,14 @@ export const paymentService = {
   },
 }
 
-function mapPayment(raw: Record<string, unknown>): PaymentRecord {
+function mapPayment(raw: Record<string, unknown>, index: number): PaymentRecord {
   const backendStatus = String(raw.status ?? "")
+  const id = raw.id as number
+  const prescriptionId = raw.prescriptionId as number
   return {
-    id: raw.id as number,
-    prescriptionId: raw.prescriptionId as number,
+    rowKey: `${id || "payment"}-${prescriptionId || "prescription"}-${index}`,
+    id,
+    prescriptionId,
     patientName: (raw.patientName as string) || "N/A",
     doctorName: (raw.doctorName as string) || "N/A",
     totalPrice: Number(raw.totalPrice ?? raw.amount ?? 0),

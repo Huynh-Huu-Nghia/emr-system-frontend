@@ -18,6 +18,7 @@ export const ROUTES = {
     PATIENTS: "/reception/patients",
     CHECKIN: "/reception/checkin",
     APPOINTMENTS: "/reception/appointments",
+    PAYMENTS: "/reception/payments",
   },
 
   DOCTOR: {
@@ -38,12 +39,12 @@ export const ROUTES = {
 } as const
 
 /** Default landing when role is unknown (should not happen). */
-export const POST_LOGIN_ROUTE = ROUTES.RECEPTION.PATIENTS
+export const POST_LOGIN_ROUTE = ROUTES.LOGIN
 
 export function getPostLoginPathForRole(role: User["role"]): string {
   switch (role) {
     case "RECEPTIONIST":
-      return ROUTES.RECEPTION.PATIENTS
+      return ROUTES.RECEPTION.DASHBOARD
     case "DOCTOR":
       return ROUTES.DOCTOR.DASHBOARD
     case "ADMIN":
