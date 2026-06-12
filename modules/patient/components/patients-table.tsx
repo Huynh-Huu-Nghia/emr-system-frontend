@@ -129,36 +129,38 @@ export function PatientsTable({
               <TableCell>
                 <span className="text-slate-500">{p.insurance_code || "---"}</span>
               </TableCell>
-              <TableCell className="flex items-center justify-end gap-2 pr-8 text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  title="Xem nhanh"
-                  onClick={() => onView(p)}
-                  className="rounded-full shadow-none transition-all hover:bg-slate-200"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={deletePending}
-                  onClick={() => onEdit(p)}
-                  className="rounded-full shadow-none transition-all hover:bg-medical-primary hover:text-white"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                {canDelete ? (
+              <TableCell className="pr-8 text-right">
+                <div className="flex items-center justify-end gap-2">
                   <Button
-                    variant="destructive"
+                    variant="ghost"
+                    size="icon"
+                    title="Xem nhanh"
+                    onClick={() => onView(p)}
+                    className="rounded-full shadow-none transition-all hover:bg-slate-200"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
                     size="icon"
                     disabled={deletePending}
-                    onClick={() => onDeleteRequest(p)}
-                    className="rounded-full shadow-none"
+                    onClick={() => onEdit(p)}
+                    className="rounded-full shadow-none transition-all hover:bg-medical-primary hover:text-white"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                ) : null}
+                  {canDelete ? (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      disabled={deletePending}
+                      onClick={() => onDeleteRequest(p)}
+                      className="rounded-full shadow-none"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
               </TableCell>
             </TableRow>
           ))

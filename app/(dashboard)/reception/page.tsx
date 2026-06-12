@@ -106,7 +106,6 @@ export default function ReceptionPage() {
   const registeredQueueCount = activeQueue.filter(
     (item) => item.source === "REGISTERED" || item.source === "APPOINTMENT"
   ).length
-  const walkInQueueCount = activeQueue.filter((item) => item.source === "WALK_IN").length
 
   return (
     <div className="space-y-6">
@@ -127,7 +126,7 @@ export default function ReceptionPage() {
           icon={Users}
           label="Đang trong hàng đợi"
           value={String(activeQueue.length)}
-          detail={`${registeredQueueCount} có hồ sơ, ${walkInQueueCount} vãng lai`}
+          detail={`${registeredQueueCount} bệnh nhân chờ khám`}
           tone="emerald"
         />
         <MetricCard

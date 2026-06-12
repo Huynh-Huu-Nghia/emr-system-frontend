@@ -102,37 +102,45 @@ export default function DoctorRecordsPage() {
         ) : (
           <MasterTable showHeader={false}>
             <MasterTableHeader>
-              <TableRow>
-                <TableHead className="w-16">ID</TableHead>
-                <TableHead>Chuyên khoa</TableHead>
-                <TableHead>Triệu chứng</TableHead>
-                <TableHead>Chẩn đoán</TableHead>
-                <TableHead>Ngày khám</TableHead>
-                <TableHead className="text-right">Xem</TableHead>
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="w-16 pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">ID</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Chuyên khoa</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Triệu chứng</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Chẩn đoán</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Ngày khám</TableHead>
+                <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Xem</TableHead>
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
               {filteredRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-mono text-sm text-slate-500">{record.id}</TableCell>
+                <TableRow key={record.id} className="group transition-colors hover:bg-slate-50">
+                  <TableCell className="pl-8 font-mono text-sm text-slate-500">#{record.id}</TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                       {RECORD_TYPE_LABELS[record.recordType] ?? record.recordType}
                     </span>
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm text-slate-600">
                     {record.symptoms}
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate text-sm font-medium">
+                  <TableCell className="max-w-[200px] truncate text-sm font-semibold text-slate-700">
                     {record.diagnosis}
                   </TableCell>
                   <TableCell className="text-sm text-slate-500">
                     {new Date(record.createdAt).toLocaleDateString("vi-VN")}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleView(record)}>
-                      <Eye className="h-4 w-4 text-slate-600" />
-                    </Button>
+                  <TableCell className="pr-8 text-right">
+                    <div className="flex items-center justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(record)}
+                        className="rounded-full shadow-none transition-all hover:bg-slate-100"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="h-4 w-4 text-slate-600" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -146,7 +154,7 @@ export default function DoctorRecordsPage() {
         <MasterModalContent className="sm:max-w-lg">
           <MasterModalHeader title={viewTarget ? `Bệnh án #${viewTarget.id}` : ""} />
           {viewTarget && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-slate-500">Chuyên khoa</p>

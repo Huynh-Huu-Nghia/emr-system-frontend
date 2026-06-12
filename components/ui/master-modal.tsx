@@ -47,10 +47,7 @@ const MasterModalContent = React.forwardRef<
 >(({ className, showCloseButton = true, ...props }, ref) => (
   <DialogContent
     ref={ref}
-    className={cn(
-      "rounded-2xl border-medical-light shadow-[0_20px_60px_rgba(13,148,136,0.08)]",
-      className
-    )}
+    className={className}
     showCloseButton={showCloseButton}
     {...props}
   />
@@ -68,11 +65,11 @@ const MasterModalHeader = React.forwardRef<
 >(({ className, title, ...props }, ref) => (
   <DialogHeader
     ref={ref}
-    className={cn("border-b border-slate-100 pb-4", className)}
+    className={className}
     {...props}
   >
     {title && (
-      <DialogTitle className="text-xl font-semibold text-medical-dark">
+      <DialogTitle>
         {title}
       </DialogTitle>
     )}
@@ -87,10 +84,7 @@ const MasterModalFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogFooter
     ref={ref}
-    className={cn(
-      "border-t border-slate-100 bg-white pt-4",
-      className
-    )}
+    className={className}
     {...props}
   />
 ))

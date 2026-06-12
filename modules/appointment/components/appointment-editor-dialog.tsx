@@ -171,10 +171,8 @@ export function AppointmentEditorDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 px-6 py-4"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4 px-6 py-5">
             {mode === "create" ? (
               <>
                 <FormField
@@ -283,7 +281,8 @@ export function AppointmentEditorDialog({
               )}
             />
 
-            <DialogFooter className="gap-2 border-t border-slate-100 bg-slate-50/80 px-0 pb-0 pt-4">
+            </div>
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"

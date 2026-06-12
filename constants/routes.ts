@@ -13,6 +13,9 @@ export const ROUTES = {
   /** Placeholder settings (global). */
   SETTINGS: "/settings",
 
+  /** Global Profile Page */
+  PROFILE: "/profile",
+
   RECEPTION: {
     DASHBOARD: "/reception",
     PATIENTS: "/reception/patients",

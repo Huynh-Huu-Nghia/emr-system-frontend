@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
@@ -48,7 +48,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
     defaultValues: {
       username: "",
       password: "",
-      role: "PATIENT",
+      role: "ADMIN",
       status: "ACTIVE",
     },
   })
@@ -63,7 +63,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
           status: initialData.status,
         })
       } else {
-        form.reset({ username: "", password: "", role: "PATIENT", status: "ACTIVE" })
+        form.reset({ username: "", password: "", role: "ADMIN", status: "ACTIVE" })
       }
     }
   }, [open, initialData, form])
@@ -87,15 +87,16 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
   return (
     <MasterModal open={open} onOpenChange={onOpenChange}>
       <MasterModalContent className="sm:max-w-md">
-        <MasterModalHeader title={isEditing ? "Chỉnh sửa tài khoản" : "Thêm tài khoản mới"} />
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <MasterModalHeader title={isEditing ? "Chỉnh sửa Admin" : "Thêm Admin mới"} />
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="space-y-4 px-6 py-5">
           <div className="space-y-2">
             <Label htmlFor="username">Tên đăng nhập</Label>
             <Input
               id="username"
               disabled={isEditing}
               {...form.register("username")}
-              placeholder="vd: bacsi_tran"
+              placeholder="vd: admin_xxx"
             />
             {form.formState.errors.username && (
               <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
@@ -122,12 +123,13 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
             <Select
               value={form.watch("role")}
               onValueChange={(v) => form.setValue("role", v as UserFormValues["role"])}
+              disabled={true}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ADMIN">Quản trị</SelectItem>
+                <SelectItem value="ADMIN">Quản trị (Admin)</SelectItem>
                 <SelectItem value="RECEPTIONIST">Tiếp tân</SelectItem>
                 <SelectItem value="DOCTOR">Bác sĩ</SelectItem>
                 <SelectItem value="PATIENT">Bệnh nhân</SelectItem>
@@ -152,6 +154,7 @@ export function UserDialog({ open, onOpenChange, initialData }: UserDialogProps)
             </Select>
           </div>
 
+          </div>
           <MasterModalFooter>
             <MasterModalAction variant="secondary" type="button" onClick={() => onOpenChange(false)}>
               Hủy

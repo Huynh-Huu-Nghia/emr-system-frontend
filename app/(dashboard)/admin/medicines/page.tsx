@@ -68,14 +68,14 @@ export default function AdminMedicinesPage() {
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <MasterTable showHeader={false}>
             <MasterTableHeader>
-              <TableRow>
-                <TableHead>Tên thuốc</TableHead>
-                <TableHead>Đơn vị</TableHead>
-                <TableHead className="text-right">Đơn giá</TableHead>
-                <TableHead className="text-right">Tồn kho</TableHead>
-                <TableHead>Hạn sử dụng</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tên thuốc</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Đơn vị</TableHead>
+                <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Đơn giá</TableHead>
+                <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tồn kho</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Hạn sử dụng</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Trạng thái</TableHead>
+                <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Thao tác</TableHead>
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
@@ -83,15 +83,20 @@ export default function AdminMedicinesPage() {
                 const lowStock = isLowStock(med)
                 const expiring = isExpiringSoon(med)
                 const expired = isExpired(med)
+                const rowClass = expired
+                  ? "bg-red-50/70 hover:bg-red-50"
+                  : expiring || lowStock
+                  ? "bg-amber-50/70 hover:bg-amber-50"
+                  : "group transition-colors hover:bg-slate-50"
                 return (
-                  <TableRow key={med.id} className={expired ? "bg-red-50" : expiring || lowStock ? "bg-amber-50" : ""}>
-                    <TableCell className="font-medium">{med.name}</TableCell>
+                  <TableRow key={med.id} className={rowClass}>
+                    <TableCell className="pl-8 font-semibold text-slate-700">{med.name}</TableCell>
                     <TableCell className="text-sm text-slate-600">{med.unit}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">
+                    <TableCell className="text-right font-mono text-sm text-slate-700">
                       {med.price.toLocaleString("vi-VN")}đ
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={lowStock ? "font-semibold text-red-600" : ""}>
+                      <span className={lowStock ? "font-semibold text-red-600" : "font-mono text-sm text-slate-700"}>
                         {med.stockQuantity}
                       </span>
                     </TableCell>
@@ -100,33 +105,43 @@ export default function AdminMedicinesPage() {
                     </TableCell>
                     <TableCell>
                       {expired && (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
                           Hết hạn
                         </span>
                       )}
                       {!expired && expiring && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                           Sắp hết hạn
                         </span>
                       )}
                       {!expired && !expiring && lowStock && (
-                        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                        <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-orange-700">
                           Sắp hết
                         </span>
                       )}
                       {!expired && !expiring && !lowStock && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                           Bình thường
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(med)}>
+                    <TableCell className="pr-8 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(med)}
+                          className="rounded-full shadow-none transition-all hover:bg-slate-100"
+                        >
                           <Pencil className="h-4 w-4 text-slate-600" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(med)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteTarget(med)}
+                          className="rounded-full shadow-none transition-all hover:bg-red-50 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

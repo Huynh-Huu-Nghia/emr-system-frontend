@@ -89,7 +89,8 @@ export function MedicineDialog({ open, onOpenChange, initialData }: MedicineDial
     <MasterModal open={open} onOpenChange={onOpenChange}>
       <MasterModalContent className="sm:max-w-md">
         <MasterModalHeader title={isEditing ? "Chỉnh sửa thuốc" : "Thêm thuốc mới"} />
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="space-y-4 px-6 py-5">
           <div className="space-y-2">
             <Label htmlFor="name">Tên thuốc</Label>
             <Input id="name" {...form.register("name")} placeholder="Paracetamol 500mg" />
@@ -132,6 +133,7 @@ export function MedicineDialog({ open, onOpenChange, initialData }: MedicineDial
             </div>
           </div>
 
+          </div>
           <MasterModalFooter>
             <MasterModalAction variant="secondary" type="button" onClick={() => onOpenChange(false)}>
               Hủy

@@ -168,7 +168,7 @@ export default function ReceptionAppointmentsPage() {
         <MasterTable showHeader={false}>
           <MasterTableHeader>
             <TableRow className="border-none hover:bg-transparent">
-              <TableHead className="min-w-[160px] pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+              <TableHead className="min-w-[160px] pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                 Thời gian
               </TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
@@ -183,7 +183,7 @@ export default function ReceptionAppointmentsPage() {
               <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                 Trạng thái
               </TableHead>
-              <TableHead className="pr-6 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+              <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                 Thao tác
               </TableHead>
             </TableRow>
@@ -212,14 +212,14 @@ export default function ReceptionAppointmentsPage() {
               </TableRow>
             ) : (
               filtered.map((a) => (
-                <TableRow key={a.id} className="hover:bg-slate-50/80">
-                  <TableCell className="pl-6 text-sm font-medium text-slate-800">
+                <TableRow key={a.id} className="group transition-colors hover:bg-slate-50">
+                  <TableCell className="pl-8 text-sm font-semibold text-slate-800">
                     {formatDateTimeVi(a.starts_at)}
                   </TableCell>
-                  <TableCell className="text-sm text-slate-700">
+                  <TableCell className="text-sm font-medium text-slate-700">
                     {a.patient_name}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-medical-primary">
+                  <TableCell className="text-sm font-semibold text-medical-primary">
                     #{a.medical_history_number}
                   </TableCell>
                   <TableCell className="hidden max-w-[200px] truncate text-sm text-slate-500 md:table-cell">
@@ -228,24 +228,24 @@ export default function ReceptionAppointmentsPage() {
                   <TableCell>
                     <AppointmentStatusBadge status={a.status} />
                   </TableCell>
-                  <TableCell className="pr-6 text-right">
+                  <TableCell className="pr-8 text-right">
                     {a.status === "PENDING" ? (
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-2">
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon-sm"
-                          className="rounded-full"
+                          size="icon"
+                          className="rounded-full shadow-none transition-all hover:bg-slate-100"
                           title="Đổi lịch"
                           onClick={() => openReschedule(a)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-4 w-4 text-slate-600" />
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon-sm"
-                          className="rounded-full text-destructive hover:text-destructive"
+                          size="icon"
+                          className="rounded-full shadow-none transition-all hover:bg-red-50 hover:text-red-600"
                           title="Huỷ lịch"
                           onClick={() => setCancelTarget(a)}
                         >

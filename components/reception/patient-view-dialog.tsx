@@ -30,11 +30,11 @@ export function PatientViewDialog({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-w-lg overflow-hidden rounded-2xl border-none bg-white p-0 shadow-2xl">
+      <DialogContent className="max-w-lg">
         {patient ? (
           <>
-            <DialogHeader className="p-6 pb-0">
-              <DialogTitle className="text-xl font-bold uppercase tracking-tight text-medical-dark">
+            <DialogHeader>
+              <DialogTitle>
                 Thông tin bệnh nhân
               </DialogTitle>
             </DialogHeader>
@@ -109,7 +109,7 @@ export function PatientViewDialog({
               </div>
             </div>
 
-            <DialogFooter className="-mx-6 -mb-6 mt-4 bg-slate-50 p-6">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"

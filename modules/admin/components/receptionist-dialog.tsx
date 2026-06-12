@@ -13,42 +13,38 @@ import {
 } from "@/components/ui/master-modal"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useCreateDoctorMutation, useUpdateDoctorMutation } from "@/modules/admin/hooks/use-doctor-mutations"
-import type { DoctorRecord } from "@/core/api/doctorService"
+import { useCreateReceptionistMutation, useUpdateReceptionistMutation } from "@/modules/admin/hooks/use-receptionist-mutations"
+import type { ReceptionistRecord } from "@/core/api/receptionistService"
 
-const doctorSchema = z.object({
+const receptionistSchema = z.object({
   username: z.string().min(3, "Tối thiểu 3 ký tự"),
   password: z.string().min(4, "Tối thiểu 4 ký tự").optional().or(z.literal("")),
   fullName: z.string().min(2, "Tối thiểu 2 ký tự"),
-  specialty: z.string().min(2, "Vui lòng nhập chuyên khoa"),
   phone: z.string().min(9, "Số điện thoại không hợp lệ"),
   email: z.string().email("Email không hợp lệ"),
-  roomNumber: z.string().min(1, "Vui lòng nhập phòng khám"),
 })
 
-type DoctorFormValues = z.infer<typeof doctorSchema>
+type ReceptionistFormValues = z.infer<typeof receptionistSchema>
 
-interface DoctorDialogProps {
+interface ReceptionistDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialData: DoctorRecord | null
+  initialData: ReceptionistRecord | null
 }
 
-export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogProps) {
+export function ReceptionistDialog({ open, onOpenChange, initialData }: ReceptionistDialogProps) {
   const isEditing = initialData != null
-  const createMutation = useCreateDoctorMutation()
-  const updateMutation = useUpdateDoctorMutation()
+  const createMutation = useCreateReceptionistMutation()
+  const updateMutation = useUpdateReceptionistMutation()
 
-  const form = useForm<DoctorFormValues>({
-    resolver: zodResolver(doctorSchema),
+  const form = useForm<ReceptionistFormValues>({
+    resolver: zodResolver(receptionistSchema),
     defaultValues: {
       username: "",
       password: "",
       fullName: "",
-      specialty: "",
       phone: "",
       email: "",
-      roomNumber: "",
     },
   })
 
@@ -59,28 +55,24 @@ export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogPr
           username: initialData.username,
           password: "",
           fullName: initialData.fullName,
-          specialty: initialData.specialty,
           phone: initialData.phone,
           email: initialData.email,
-          roomNumber: initialData.roomNumber,
         })
       } else {
-        form.reset({ username: "", password: "", fullName: "", specialty: "", phone: "", email: "", roomNumber: "" })
+        form.reset({ username: "", password: "", fullName: "", phone: "", email: "" })
       }
     }
   }, [open, initialData, form])
 
-  const onSubmit = (values: DoctorFormValues) => {
+  const onSubmit = (values: ReceptionistFormValues) => {
     if (isEditing) {
       updateMutation.mutate(
         {
           id: initialData.id,
           data: {
             fullName: values.fullName,
-            specialty: values.specialty,
             phone: values.phone,
             email: values.email,
-            roomNumber: values.roomNumber,
           },
         },
         { onSuccess: () => onOpenChange(false) }
@@ -91,10 +83,8 @@ export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogPr
           username: values.username,
           password: values.password || "default",
           fullName: values.fullName,
-          specialty: values.specialty,
           phone: values.phone,
           email: values.email,
-          roomNumber: values.roomNumber,
         },
         { onSuccess: () => onOpenChange(false) }
       )
@@ -106,13 +96,13 @@ export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogPr
   return (
     <MasterModal open={open} onOpenChange={onOpenChange}>
       <MasterModalContent className="sm:max-w-lg">
-        <MasterModalHeader title={isEditing ? "Chỉnh sửa Bác sĩ" : "Thêm Bác sĩ mới"} />
+        <MasterModalHeader title={isEditing ? "Chỉnh sửa Lễ tân" : "Thêm Lễ tân mới"} />
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-4 px-6 py-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="username">Tên đăng nhập</Label>
-              <Input id="username" disabled={isEditing} {...form.register("username")} placeholder="bacsi_xxx" />
+              <Input id="username" disabled={isEditing} {...form.register("username")} placeholder="letan_xxx" />
               {form.formState.errors.username && (
                 <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
               )}
@@ -130,27 +120,10 @@ export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogPr
 
           <div className="space-y-2">
             <Label htmlFor="fullName">Họ và tên</Label>
-            <Input id="fullName" {...form.register("fullName")} placeholder="BS. Nguyễn Văn A" />
+            <Input id="fullName" {...form.register("fullName")} placeholder="Trần Thị B" />
             {form.formState.errors.fullName && (
               <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
             )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="specialty">Chuyên khoa</Label>
-              <Input id="specialty" {...form.register("specialty")} placeholder="Nội tổng quát" />
-              {form.formState.errors.specialty && (
-                <p className="text-xs text-red-500">{form.formState.errors.specialty.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="roomNumber">Phòng khám</Label>
-              <Input id="roomNumber" {...form.register("roomNumber")} placeholder="P101" />
-              {form.formState.errors.roomNumber && (
-                <p className="text-xs text-red-500">{form.formState.errors.roomNumber.message}</p>
-              )}
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -163,7 +136,7 @@ export function DoctorDialog({ open, onOpenChange, initialData }: DoctorDialogPr
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" {...form.register("email")} placeholder="bs@emr.local" />
+              <Input id="email" {...form.register("email")} placeholder="lt@emr.local" />
               {form.formState.errors.email && (
                 <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
               )}

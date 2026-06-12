@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
@@ -143,6 +143,59 @@ export default function DoctorExaminationPage() {
     recordType: "GENERAL",
   })
 
+  const [checkingRecord, setCheckingRecord] = useState(false)
+
+  // Check for existing medical record
+  useEffect(() => {
+    if (appointmentId) {
+      setCheckingRecord(true)
+      medicalRecordService
+        .getByAppointmentId(Number(appointmentId))
+        .then((record) => {
+          if (record) {
+            setCreatedRecordId(record.id)
+            setStep("prescription")
+            toast.info("Đã tìm thấy bệnh án cũ cho lịch hẹn này, chuyển đến kê đơn thuốc.")
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to check existing medical record", err)
+        })
+        .finally(() => {
+          setCheckingRecord(false)
+        })
+    }
+  }, [appointmentId])
+
+  // Restore draft
+  useEffect(() => {
+    const draftKey = `exam_draft_${appointmentId || queueId || "walkin"}`
+    const draft = localStorage.getItem(draftKey)
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft)
+        setForm(parsed)
+      } catch (e) {
+        console.error("Failed to parse draft", e)
+      }
+    }
+  }, [appointmentId, queueId])
+
+  // Save draft
+  useEffect(() => {
+    const draftKey = `exam_draft_${appointmentId || queueId || "walkin"}`
+    localStorage.setItem(draftKey, JSON.stringify(form))
+  }, [form, appointmentId, queueId])
+
+  // Loading check
+  if (checkingRecord) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+        <p className="text-sm text-slate-500">Đang kiểm tra hồ sơ bệnh án cũ cho lịch hẹn này...</p>
+      </div>
+    )
+  }
+
   // Redirect nếu không có bệnh nhân
   if (!patientName) {
     return (
@@ -187,6 +240,11 @@ export default function DoctorExaminationPage() {
         treatmentPlan: form.treatmentPlan,
       })
       setCreatedRecordId(result.id)
+      
+      // Clear draft after successful save
+      const draftKey = `exam_draft_${appointmentId || queueId || "walkin"}`
+      localStorage.removeItem(draftKey)
+      
       toast.success("Đã lưu bệnh án")
       setStep("prescription")
     } catch {

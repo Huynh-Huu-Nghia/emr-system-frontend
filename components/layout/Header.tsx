@@ -76,7 +76,7 @@ export function Header() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { router.push(`/${role}`); setUserMenuOpen(false) }}
+                  onClick={() => { router.push(ROUTES.PROFILE); setUserMenuOpen(false) }}
                   className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
                 >
                   <User className="h-4 w-4 text-slate-400" />

@@ -62,7 +62,7 @@ export function QuickPrescriptionModal({ open, onOpenChange }: { open: boolean; 
     <MasterModal open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setSelectedPatient(null) }}>
       <MasterModalContent className="sm:max-w-lg">
         <MasterModalHeader title="Đơn thuốc nhanh" />
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 px-6 py-5">
           {/* Step 1: Chọn bệnh nhân */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase text-slate-400">1. Chọn bệnh nhân</p>

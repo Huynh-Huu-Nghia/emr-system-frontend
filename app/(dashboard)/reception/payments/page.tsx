@@ -6,6 +6,13 @@ import { CheckCircle2, Eye, Receipt } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   MasterTable,
   MasterTableBody,
   MasterTableHeader,
@@ -34,10 +41,17 @@ export default function ReceptionPaymentsPage() {
   const [viewTarget, setViewTarget] = useState<PaymentRecord | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<PaymentRecord | null>(null)
 
+  const [filter, setFilter] = useState<"ALL" | "UNPAID" | "PAID">("ALL")
+
   const unpaidCount = useMemo(
     () => payments.filter((payment) => payment.status === "UNPAID").length,
     [payments]
   )
+
+  const filteredPayments = useMemo(() => {
+    if (filter === "ALL") return payments
+    return payments.filter((payment) => payment.status === filter)
+  }, [payments, filter])
 
   if (isPending) return <LoadingBlock />
   if (isError) {
@@ -61,41 +75,55 @@ export default function ReceptionPaymentsPage() {
         </div>
       </PageHeader>
 
-      {payments.length === 0 ? (
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium text-slate-700">Lọc hóa đơn:</label>
+        <Select value={filter} onValueChange={(v: "ALL" | "UNPAID" | "PAID") => setFilter(v)}>
+          <SelectTrigger className="w-[200px] bg-white">
+            <SelectValue placeholder="Chọn trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Tất cả</SelectItem>
+            <SelectItem value="UNPAID">Chờ thanh toán</SelectItem>
+            <SelectItem value="PAID">Đã thanh toán</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filteredPayments.length === 0 ? (
         <EmptyState
           title="Chưa có hóa đơn nào"
           description="Hóa đơn sẽ xuất hiện sau khi bác sĩ lưu đơn thuốc."
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <MasterTable showHeader={false}>
             <MasterTableHeader>
-              <TableRow>
-                <TableHead>Mã HĐ</TableHead>
-                <TableHead>Bệnh nhân</TableHead>
-                <TableHead>Bác sĩ</TableHead>
-                <TableHead className="text-right">Tổng tiền</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Mã HĐ</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bệnh nhân</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bác sĩ</TableHead>
+                <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tổng tiền</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Trạng thái</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Ngày tạo</TableHead>
+                <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Thao tác</TableHead>
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
-              {payments.map((payment) => (
-                <TableRow key={payment.rowKey}>
-                  <TableCell className="font-mono text-sm">#{payment.id}</TableCell>
-                  <TableCell className="font-medium">{payment.patientName}</TableCell>
+              {filteredPayments.map((payment) => (
+                <TableRow key={payment.rowKey} className="group transition-colors hover:bg-slate-50">
+                  <TableCell className="pl-8 font-mono text-sm text-slate-500">#{payment.id}</TableCell>
+                  <TableCell className="font-semibold text-slate-700">{payment.patientName}</TableCell>
                   <TableCell className="text-sm text-slate-600">{payment.doctorName}</TableCell>
-                  <TableCell className="text-right font-mono text-sm font-semibold">
+                  <TableCell className="text-right font-mono text-sm font-semibold text-slate-700">
                     {payment.totalPrice.toLocaleString("vi-VN")}đ
                   </TableCell>
                   <TableCell>
                     {payment.status === "PAID" ? (
-                      <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                         Đã thanh toán
                       </span>
                     ) : (
-                      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                         Chờ thanh toán
                       </span>
                     )}
@@ -105,22 +133,24 @@ export default function ReceptionPaymentsPage() {
                       ? new Date(payment.createdAt).toLocaleDateString("vi-VN")
                       : "---"}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                  <TableCell className="pr-8 text-right">
+                    <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         title="Xem hóa đơn"
                         onClick={() => setViewTarget(payment)}
+                        className="rounded-full shadow-none transition-all hover:bg-slate-100"
                       >
                         <Eye className="h-4 w-4 text-slate-600" />
                       </Button>
                       {payment.status === "UNPAID" ? (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           title="Xác nhận thu tiền"
                           onClick={() => setConfirmTarget(payment)}
+                          className="rounded-full shadow-none transition-all hover:bg-emerald-50 hover:text-emerald-600"
                         >
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         </Button>
@@ -143,7 +173,7 @@ export default function ReceptionPaymentsPage() {
         <MasterModalContent className="sm:max-w-lg">
           <MasterModalHeader title={viewTarget ? `Hóa đơn #${viewTarget.id}` : ""} />
           {viewTarget ? (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <InvoiceMeta label="Bệnh nhân" value={viewTarget.patientName} />
                 <InvoiceMeta label="Bác sĩ" value={viewTarget.doctorName} />

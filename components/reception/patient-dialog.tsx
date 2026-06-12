@@ -126,19 +126,17 @@ export function PatientDialog({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="max-w-md overflow-hidden rounded-2xl border-none bg-white p-0 shadow-2xl">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold uppercase tracking-tight text-medical-dark">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
             {initialData ? "Chỉnh sửa hồ sơ" : "Tiếp nhận Bệnh nhân"}
           </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-5 px-6 py-4"
-          >
-            <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-5 px-6 py-5">
+              <FormField
               control={form.control}
               name="full_name"
               render={({ field }) => (
@@ -344,8 +342,8 @@ export function PatientDialog({
                 ) : null}
               </div>
             ) : null}
-
-            <DialogFooter className="-mx-6 -mb-6 mt-6 gap-3 bg-slate-50 p-6">
+            </div>
+            <DialogFooter>
               <Button
                 type="button"
                 variant="ghost"

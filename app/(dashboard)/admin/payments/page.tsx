@@ -55,32 +55,32 @@ export default function AdminPaymentsPage() {
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <MasterTable showHeader={false}>
             <MasterTableHeader>
-              <TableRow>
-                <TableHead>Mã HĐ</TableHead>
-                <TableHead>Bệnh nhân</TableHead>
-                <TableHead>Bác sĩ</TableHead>
-                <TableHead className="text-right">Tổng tiền</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Mã HĐ</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bệnh nhân</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bác sĩ</TableHead>
+                <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tổng tiền</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Trạng thái</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Ngày tạo</TableHead>
+                <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Thao tác</TableHead>
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
               {payments.map((payment) => (
-                <TableRow key={payment.rowKey}>
-                  <TableCell className="font-mono text-sm">#{payment.id}</TableCell>
-                  <TableCell className="font-medium">{payment.patientName}</TableCell>
+                <TableRow key={payment.rowKey} className="group transition-colors hover:bg-slate-50">
+                  <TableCell className="pl-8 font-mono text-sm text-slate-500">#{payment.id}</TableCell>
+                  <TableCell className="font-semibold text-slate-700">{payment.patientName}</TableCell>
                   <TableCell className="text-sm text-slate-600">{payment.doctorName}</TableCell>
-                  <TableCell className="text-right font-mono text-sm font-semibold">
+                  <TableCell className="text-right font-mono text-sm font-semibold text-slate-700">
                     {payment.totalPrice.toLocaleString("vi-VN")}đ
                   </TableCell>
                   <TableCell>
                     {payment.status === "PAID" ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                         Đã thanh toán
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                         Chờ thanh toán
                       </span>
                     )}
@@ -88,13 +88,25 @@ export default function AdminPaymentsPage() {
                   <TableCell className="text-sm text-slate-500">
                     {new Date(payment.createdAt).toLocaleDateString("vi-VN")}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setViewTarget(payment)}>
+                  <TableCell className="pr-8 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setViewTarget(payment)}
+                        title="Xem hóa đơn"
+                        className="rounded-full shadow-none transition-all hover:bg-slate-100"
+                      >
                         <Eye className="h-4 w-4 text-slate-600" />
                       </Button>
                       {payment.status === "UNPAID" && (
-                        <Button variant="ghost" size="sm" onClick={() => setConfirmTarget(payment)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setConfirmTarget(payment)}
+                          title="Xác nhận thanh toán"
+                          className="rounded-full shadow-none transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                        >
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         </Button>
                       )}
@@ -112,7 +124,7 @@ export default function AdminPaymentsPage() {
         <MasterModalContent className="sm:max-w-lg">
           <MasterModalHeader title={viewTarget ? `Hóa đơn #${viewTarget.id}` : ""} />
           {viewTarget && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-slate-500">Bệnh nhân</p>
