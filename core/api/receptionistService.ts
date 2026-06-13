@@ -32,13 +32,19 @@ export interface ReceptionistUpdateRequest {
 export const receptionistService = {
   async getAll(): Promise<ReceptionistRecord[]> {
     const res = await apiFetch("/api/receptionists")
-    if (!res.ok) throw new Error("Failed to fetch receptionists")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to fetch receptionists" }))
+      throw new Error(err.error || "Failed to fetch receptionists")
+    }
     return res.json()
   },
 
   async getById(id: number): Promise<ReceptionistRecord> {
     const res = await apiFetch(`/api/receptionists/${id}`)
-    if (!res.ok) throw new Error("Receptionist not found")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Receptionist not found" }))
+      throw new Error(err.error || "Receptionist not found")
+    }
     return res.json()
   },
 
@@ -48,7 +54,10 @@ export const receptionistService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error("Failed to create receptionist")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to create receptionist" }))
+      throw new Error(err.error || "Failed to create receptionist")
+    }
     return res.json()
   },
 
@@ -58,13 +67,19 @@ export const receptionistService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error("Failed to update receptionist")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to update receptionist" }))
+      throw new Error(err.error || "Failed to update receptionist")
+    }
     return res.json()
   },
 
   async delete(id: number): Promise<boolean> {
     const res = await apiFetch(`/api/receptionists/${id}`, { method: "DELETE" })
-    if (!res.ok) throw new Error("Failed to delete receptionist")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to delete receptionist" }))
+      throw new Error(err.error || "Failed to delete receptionist")
+    }
     return true
   },
 }

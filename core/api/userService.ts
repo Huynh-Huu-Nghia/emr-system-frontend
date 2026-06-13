@@ -18,12 +18,16 @@ export interface UserCreateRequest {
 export interface UserUpdateRequest {
   role: UserRecord["role"]
   status: UserRecord["status"]
+  password?: string
 }
 
 export const userService = {
   async getAll(): Promise<UserRecord[]> {
     const res = await apiFetch("/api/users")
-    if (!res.ok) throw new Error("Failed to fetch users")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to fetch users" }))
+      throw new Error(err.error || "Failed to fetch users")
+    }
     return res.json()
   },
 
@@ -38,7 +42,10 @@ export const userService = {
         status: data.status ?? "ACTIVE",
       }),
     })
-    if (!res.ok) throw new Error("Failed to create user")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to create user" }))
+      throw new Error(err.error || "Failed to create user")
+    }
     return res.json()
   },
 
@@ -46,15 +53,25 @@ export const userService = {
     const res = await apiFetch(`/api/users/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: data.role, status: data.status }),
+      body: JSON.stringify({
+        role: data.role,
+        status: data.status,
+        password: data.password || "",
+      }),
     })
-    if (!res.ok) throw new Error("Failed to update user")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to update user" }))
+      throw new Error(err.error || "Failed to update user")
+    }
     return res.json()
   },
 
   async delete(id: number): Promise<boolean> {
     const res = await apiFetch(`/api/users/${id}`, { method: "DELETE" })
-    if (!res.ok) throw new Error("Failed to delete user")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to delete user" }))
+      throw new Error(err.error || "Failed to delete user")
+    }
     return true
   },
 }

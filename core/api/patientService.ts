@@ -102,7 +102,10 @@ export const patientService = {
         address: data.address,
       }),
     })
-    if (!res.ok) throw new Error("Failed to update patient")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to update patient" }))
+      throw new Error(err.error || "Failed to update patient")
+    }
     return {
       id,
       user_id: null,

@@ -35,13 +35,19 @@ export interface DoctorUpdateRequest {
 export const doctorService = {
   async getAll(): Promise<DoctorRecord[]> {
     const res = await apiFetch("/api/doctors")
-    if (!res.ok) throw new Error("Failed to fetch doctors")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to fetch doctors" }))
+      throw new Error(err.error || "Failed to fetch doctors")
+    }
     return res.json()
   },
 
   async getById(id: number): Promise<DoctorRecord> {
     const res = await apiFetch(`/api/doctors/${id}`)
-    if (!res.ok) throw new Error("Doctor not found")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Doctor not found" }))
+      throw new Error(err.error || "Doctor not found")
+    }
     return res.json()
   },
 
@@ -59,7 +65,10 @@ export const doctorService = {
         roomNumber: data.roomNumber,
       }),
     })
-    if (!res.ok) throw new Error("Failed to create doctor")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to create doctor" }))
+      throw new Error(err.error || "Failed to create doctor")
+    }
     return res.json()
   },
 
@@ -69,13 +78,19 @@ export const doctorService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error("Failed to update doctor")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to update doctor" }))
+      throw new Error(err.error || "Failed to update doctor")
+    }
     return res.json()
   },
 
   async delete(id: number): Promise<boolean> {
     const res = await apiFetch(`/api/doctors/${id}`, { method: "DELETE" })
-    if (!res.ok) throw new Error("Failed to delete doctor")
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Failed to delete doctor" }))
+      throw new Error(err.error || "Failed to delete doctor")
+    }
     return true
   },
 }
