@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Eye, Receipt, RefreshCw, Search } from "lucide-react"
+import { CheckCircle2, Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,6 +49,14 @@ export default function ReceptionPaymentsPage() {
   const [search, setSearch] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refetch({ cancelRefetch: true })
+    setLastUpdated(new Date())
+    setIsRefreshing(false)
+  }, [refetch])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,12 +65,6 @@ export default function ReceptionPaymentsPage() {
     return () => clearInterval(interval)
   }, [refetch])
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true)
-    await refetch()
-    setLastUpdated(new Date())
-    setIsRefreshing(false)
-  }, [refetch])
 
   const unpaidCount = useMemo(
     () => payments.filter((p) => p.status === "UNPAID").length,
@@ -79,8 +81,8 @@ export default function ReceptionPaymentsPage() {
         p.doctorName.toLowerCase().includes(q) ||
         String(p.id).includes(q)
       )
-    })
-  }, [payments, filter, search])
+    }).sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
+  }, [payments, filter, search, sortOrder])
 
   if (isPending) return <LoadingBlock />
   if (isError) return <ErrorState description="Không thể tải danh sách hóa đơn" onRetry={() => void refetch()} />
@@ -158,7 +160,12 @@ export default function ReceptionPaymentsPage() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Mã HĐ</TableHead>
+                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                    Mã HĐ
+                    {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                  </Button>
+                </TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bệnh nhân</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bác sĩ</TableHead>
                 <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tổng tiền</TableHead>
@@ -170,7 +177,7 @@ export default function ReceptionPaymentsPage() {
             <MasterTableBody>
               {filteredPayments.map((payment) => (
                 <TableRow key={payment.rowKey} className="group transition-colors hover:bg-slate-50">
-                  <TableCell className="pl-8 font-mono text-sm text-slate-500">#{payment.id}</TableCell>
+                  <TableCell className="pl-8 font-mono text-sm font-medium text-medical-primary">{payment.paymentCode}</TableCell>
                   <TableCell className="font-semibold text-slate-700">{payment.patientName}</TableCell>
                   <TableCell className="text-sm text-slate-600">{payment.doctorName}</TableCell>
                   <TableCell className="text-right font-mono text-sm font-semibold text-slate-700">

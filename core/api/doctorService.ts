@@ -10,6 +10,8 @@ export interface DoctorRecord {
   email: string
   roomNumber: string
   createdAt: string
+  doctorCode: string
+  status: string
 }
 
 export interface DoctorCreateRequest {
@@ -30,6 +32,23 @@ export interface DoctorUpdateRequest {
   phone?: string
   email?: string
   roomNumber?: string
+  status?: string
+}
+
+function mapDoctor(raw: Record<string, unknown>): DoctorRecord {
+  return {
+    id: raw.id as number,
+    userId: raw.userId as number,
+    username: raw.username as string,
+    fullName: raw.fullName as string,
+    specialty: raw.specialty as string,
+    phone: raw.phone as string,
+    email: raw.email as string,
+    roomNumber: raw.roomNumber as string,
+    createdAt: raw.createdAt as string,
+    doctorCode: `BS${String(raw.id).padStart(3, "0")}`,
+    status: (raw.status as string) || "ACTIVE",
+  }
 }
 
 export const doctorService = {
@@ -39,7 +58,8 @@ export const doctorService = {
       const err = await res.json().catch(() => ({ error: "Failed to fetch doctors" }))
       throw new Error(err.error || "Failed to fetch doctors")
     }
-    return res.json()
+    const rawData = await res.json()
+    return (rawData as Record<string, unknown>[]).map(mapDoctor)
   },
 
   async getById(id: number): Promise<DoctorRecord> {
@@ -48,7 +68,8 @@ export const doctorService = {
       const err = await res.json().catch(() => ({ error: "Doctor not found" }))
       throw new Error(err.error || "Doctor not found")
     }
-    return res.json()
+    const rawData = await res.json()
+    return mapDoctor(rawData)
   },
 
   async create(data: DoctorCreateRequest): Promise<{ id: number }> {

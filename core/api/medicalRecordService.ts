@@ -8,6 +8,8 @@ export interface MedicalRecord {
   recordType: string
   treatmentPlan: string
   createdAt: string
+  recordCode: string
+  patientName?: string
 }
 
 export interface MedicalRecordCreateRequest {
@@ -18,24 +20,53 @@ export interface MedicalRecordCreateRequest {
   treatmentPlan: string
 }
 
+function mapMedicalRecord(raw: Record<string, unknown>): MedicalRecord {
+  return {
+    id: raw.id as number,
+    appointmentId: raw.appointmentId as number,
+    symptoms: raw.symptoms as string,
+    diagnosis: raw.diagnosis as string,
+    recordType: raw.recordType as string,
+    treatmentPlan: raw.treatmentPlan as string,
+    createdAt: raw.createdAt as string,
+    recordCode: `BA${String(raw.id).padStart(3, "0")}`,
+    patientName: raw.patientName as string | undefined,
+  }
+}
+
 export const medicalRecordService = {
   async getAll(): Promise<MedicalRecord[]> {
     const res = await apiFetch("/api/patients/medical-records")
     if (!res.ok) throw new Error("Failed to fetch medical records")
-    return res.json()
+    const rawData = await res.json()
+    return (rawData as Record<string, unknown>[]).map(mapMedicalRecord)
   },
 
   async getById(id: number): Promise<MedicalRecord> {
     const res = await apiFetch(`/api/patients/medical-records/${id}`)
     if (!res.ok) throw new Error("Medical record not found")
-    return res.json()
+    const rawData = await res.json()
+    return mapMedicalRecord(rawData)
   },
 
   async getByAppointmentId(appointmentId: number): Promise<MedicalRecord | null> {
     const res = await apiFetch(`/api/patients/medical-records?appointmentId=${appointmentId}`)
     if (!res.ok) throw new Error("Failed to fetch medical record")
     const data = await res.json()
-    return data ?? null
+    if (!data) return null
+    if (Array.isArray(data)) {
+      if (data.length === 0) return null
+      return mapMedicalRecord(data[0])
+    }
+    return mapMedicalRecord(data)
+  },
+
+  async getByPatientId(patientId: number): Promise<MedicalRecord[]> {
+    const res = await apiFetch(`/api/patients/medical-records?patientId=${patientId}`)
+    if (!res.ok) throw new Error("Failed to fetch medical records for patient")
+    const data = await res.json()
+    if (!Array.isArray(data)) return []
+    return data.map(mapMedicalRecord)
   },
 
   async create(data: MedicalRecordCreateRequest): Promise<{ id: number }> {

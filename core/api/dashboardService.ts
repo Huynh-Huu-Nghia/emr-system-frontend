@@ -1,12 +1,23 @@
 import { apiFetch } from "@/shared/lib/api-client"
 
+export interface TopMedicine {
+  name: string
+  unit: string
+  quantity: number
+}
+
 export interface DashboardStats {
   totalUsers: number
   totalDoctors: number
   totalPatients: number
+  newPatients: number
   todayAppointments: number
+  completedAppointments: number
   revenue: number
+  todayRevenue: number
+  monthlyRevenue: number[]
   unpaidInvoices: number
+  topMedicines: TopMedicine[]
 }
 
 export interface AuditLogEntry {
@@ -18,13 +29,14 @@ export interface AuditLogEntry {
 }
 
 export const dashboardService = {
-  async getStats(): Promise<DashboardStats> {
-    const res = await apiFetch("/api/dashboard")
+  async getStats(timeframe: string = "today"): Promise<DashboardStats> {
+    const res = await apiFetch(`/api/dashboard?timeframe=${timeframe}`)
     if (!res.ok) throw new Error("Failed to fetch dashboard stats")
     const data = await res.json()
     return {
       ...data,
       unpaidInvoices: data.unpaidInvoices ?? 0,
+      topMedicines: data.topMedicines ?? [],
     }
   },
 

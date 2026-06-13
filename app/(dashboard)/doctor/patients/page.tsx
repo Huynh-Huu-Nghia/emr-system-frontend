@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, useCallback } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Stethoscope, Clock, UserCheck, Search, RefreshCw } from "lucide-react"
-import { useListenQueue } from "@/shared/queue/queue-stub"
+import { useListenQueue, useStartQueueMutation } from "@/shared/queue/queue-stub"
 import { formatDateVi } from "@/shared/lib/format/date"
 import { ROUTES } from "@/constants/routes"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ export default function DoctorPatientsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const queue = useListenQueue()
+  const startQueue = useStartQueueMutation()
 
   const filteredQueue = useMemo(() => {
   if (!search.trim()) return queue
@@ -49,13 +50,20 @@ useEffect(() => {
   return () => clearInterval(interval)
 }, [])
 
-  const handleStartExam = (patient: (typeof queue)[number]) => {
+  const handleStartExam = async (patient: (typeof queue)[number]) => {
+    try {
+      await startQueue.mutateAsync(patient.id)
+    } catch (e) {
+      // Allow proceeding even if status update fails
+      console.error("Failed to start queue:", e)
+    }
     const params = new URLSearchParams()
     params.set("patientName", patient.patientName)
     params.set("medicalHistoryNumber", patient.medicalHistoryNumber)
     params.set("queueId", String(patient.id))
     if (patient.patientId != null) params.set("patientId", String(patient.patientId))
     if (patient.appointmentId != null) params.set("appointmentId", String(patient.appointmentId))
+    if (patient.reason) params.set("reason", patient.reason)
     router.push(`${ROUTES.DOCTOR.EXAMINATION}?${params.toString()}`)
   }
 
@@ -138,10 +146,16 @@ useEffect(() => {
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">Vãng lai</span>
                       )}
                     </div>
+                    {patient.reason && (
+                      <p className="mt-1 text-sm text-slate-500">
+                        <span className="font-medium">Lý do khám:</span> {patient.reason}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button
-                  onClick={() => handleStartExam(patient)}
+                  onClick={() => void handleStartExam(patient)}
+                  disabled={startQueue.isPending}
                   size="sm"
                   className="rounded-lg bg-medical-primary text-white hover:bg-medical-dark"
                 >

@@ -18,7 +18,7 @@ export function DashboardAuthShell({
   return (
     <ProtectedRoute allowedRoles={allowedRoles}>
       <div className="flex h-screen w-full bg-slate-50">
-        <div className="z-20 h-full w-64 flex-shrink-0">
+        <div className="z-20 h-full flex-shrink-0">
           <Sidebar />
         </div>
 

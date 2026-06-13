@@ -38,26 +38,28 @@ export function Header() {
   })
 
   return (
-    <header className="h-20 bg-white border-b border-slate-200 sticky top-0 z-50">
+    <header className="h-20 bg-gradient-to-r from-emerald-50 to-white/80 backdrop-blur-md border-b border-slate-200/50 sticky top-0 z-50 shadow-sm">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-end px-8">
         <div className="flex items-center gap-6">
-          <div className="whitespace-nowrap rounded-full bg-medical-light px-4 py-2 text-sm font-semibold text-medical-dark">
+          <div className="whitespace-nowrap rounded-full bg-white/50 border border-slate-200/50 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
             {now}
           </div>
 
-          <NotificationBell />
+          <div className="text-slate-600">
+            <NotificationBell />
+          </div>
 
           {/* User Menu */}
           <div className="relative" ref={menuRef}>
             <button
               type="button"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="inline-flex items-center gap-3 rounded-full bg-medical-light px-3 py-2 text-sm font-semibold text-medical-dark transition hover:opacity-80"
+              className="inline-flex items-center gap-3 rounded-full bg-slate-100/50 border border-slate-200/50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200/50 shadow-inner"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-medical-primary text-white font-semibold text-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-medical-primary text-white font-bold text-sm shadow-sm">
                 {user?.fullName?.slice(0, 2).toUpperCase() ?? "U"}
               </div>
-              <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
             </button>
 
             {userMenuOpen && (

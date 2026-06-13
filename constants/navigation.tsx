@@ -9,6 +9,7 @@ import {
   Pill,
   CreditCard,
   UserCog,
+  Receipt,
 } from "lucide-react"
 
 import type { ComponentType } from "react"
@@ -40,7 +41,7 @@ export const SIDEBAR_MENU: Record<"reception" | "doctor" | "admin", MenuItem[]> 
     { label: "Nhân viên", href: ROUTES.ADMIN.STAFF, icon: UserCog },
     // { label: "Bác sĩ", href: ROUTES.ADMIN.DOCTORS, icon: Stethoscope },
     { label: "Kho thuốc", href: ROUTES.ADMIN.MEDICINES, icon: Pill },
-    { label: "Thanh toán", href: ROUTES.ADMIN.PAYMENTS, icon: CreditCard },
+    { label: "Hóa đơn", href: ROUTES.ADMIN.PAYMENTS, icon: Receipt },
     { label: "Cấu hình", href: ROUTES.ADMIN.SETTINGS, icon: Settings },
   ],
 }

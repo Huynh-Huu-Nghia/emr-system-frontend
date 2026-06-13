@@ -9,7 +9,6 @@ import { toast } from "sonner"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { medicineService, type Medicine } from "@/core/api/medicineService"
 import { prescriptionService } from "@/core/api/prescriptionService"
-import { prescriptionTemplateService, type PrescriptionTemplate, type PrescriptionTemplateItem } from "@/core/api/prescriptionTemplateService"
 import { queryKeys } from "@/shared/query/query-keys"
 import { MedicineSearchModal } from "./medicine-search-modal"
 
@@ -44,8 +43,17 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
   })
 
   const { data: templates = [] } = useQuery({
-    queryKey: ["prescription-templates"],
-    queryFn: () => prescriptionTemplateService.getAll(),
+    queryKey: ["prescription-templates", "local"],
+    queryFn: async () => {
+      if (typeof window === "undefined") return []
+      try {
+        const stored = localStorage.getItem("local_prescription_templates")
+        if (stored) return JSON.parse(stored) as any[]
+      } catch (e) {
+        console.error(e)
+      }
+      return []
+    },
   })
 
   const filteredMedicines = useMemo(() => {
@@ -92,8 +100,8 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
       return
     }
     try {
-      await prescriptionTemplateService.create({
-        doctorId: 0,
+      const newTemplate = {
+        id: Date.now(),
         name: templateName,
         items: items.map((i) => ({
           medicineId: i.medicineId,
@@ -101,17 +109,21 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
           quantity: i.quantity,
           dosage: i.dosage,
         })),
-      })
-      toast.success("Đã lưu mẫu đơn thuốc")
+      }
+      const existing = [...templates]
+      existing.push(newTemplate)
+      localStorage.setItem("local_prescription_templates", JSON.stringify(existing))
+      
+      toast.success("Đã lưu mẫu đơn thuốc vào thiết bị")
       setTemplateName("")
-      qc.invalidateQueries({ queryKey: ["prescription-templates"] })
+      qc.invalidateQueries({ queryKey: ["prescription-templates", "local"] })
     } catch {
       toast.error("Không thể lưu mẫu")
     }
   }
 
-  const handleLoadTemplate = (template: PrescriptionTemplate) => {
-    const newItems: PrescriptionItem[] = template.items.map((t) => {
+  const handleLoadTemplate = (template: any) => {
+    const newItems: PrescriptionItem[] = template.items.map((t: any) => {
       const med = medicines.find((m) => m.id === t.medicineId)
       return {
         medicineId: t.medicineId,
@@ -125,6 +137,14 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
     setItems(newItems)
     setShowTemplates(false)
     toast.success(`Đã tải mẫu "${template.name}"`)
+  }
+
+  const handleDeleteTemplate = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    const existing = templates.filter(t => t.id !== id)
+    localStorage.setItem("local_prescription_templates", JSON.stringify(existing))
+    qc.invalidateQueries({ queryKey: ["prescription-templates", "local"] })
+    toast.success("Đã xóa mẫu đơn thuốc")
   }
 
   const handleUpdateItem = (medicineId: number, field: "quantity" | "dosage", value: string) => {
@@ -252,9 +272,14 @@ export function PrescriptionBuilder({ medicalRecordId, onFinish, onBack }: Presc
                       <p className="text-sm font-medium text-slate-700">{t.name}</p>
                       <p className="text-xs text-slate-400">{t.items.length} thuốc</p>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleLoadTemplate(t)}>
-                      <Plus className="h-4 w-4 text-medical-primary" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleLoadTemplate(t)} title="Tải mẫu">
+                        <Plus className="h-4 w-4 text-medical-primary" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={(e) => handleDeleteTemplate(e, t.id)} title="Xóa mẫu">
+                        <Trash2 className="h-4 w-4 text-red-400" />
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}

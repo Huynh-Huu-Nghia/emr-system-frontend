@@ -77,6 +77,7 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
             department: values.department,
             phone: values.phone,
             email: values.email,
+            password: values.password || undefined,
           },
         },
         { onSuccess: () => onOpenChange(false) }
@@ -112,15 +113,13 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
                 <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
               )}
             </div>
-            {!isEditing && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <Input id="password" type="password" {...form.register("password")} />
-                {form.formState.errors.password && (
-                  <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
-                )}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="password">{isEditing ? "Đổi mật khẩu mới (Bỏ trống nếu không đổi)" : "Mật khẩu"}</Label>
+              <Input id="password" type="password" {...form.register("password")} />
+              {form.formState.errors.password && (
+                <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
+              )}
+            </div>
           </div>
             <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">

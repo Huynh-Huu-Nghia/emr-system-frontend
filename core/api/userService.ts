@@ -28,7 +28,8 @@ export const userService = {
       const err = await res.json().catch(() => ({ error: "Failed to fetch users" }))
       throw new Error(err.error || "Failed to fetch users")
     }
-    return res.json()
+    const raw = await res.json()
+    return raw as UserRecord[]
   },
 
   async create(data: UserCreateRequest): Promise<UserRecord> {

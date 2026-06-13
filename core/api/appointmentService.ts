@@ -1,4 +1,4 @@
-﻿import { apiFetch } from "@/shared/lib/api-client"
+import { apiFetch } from "@/shared/lib/api-client"
 
 export type AppointmentStatus = "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
 
@@ -15,6 +15,7 @@ export interface Appointment {
   reason: string | null
   status: AppointmentStatus
   created_at: string
+  appointmentCode: string
 }
 
 export interface AppointmentCreateRequest {
@@ -53,6 +54,7 @@ function mapAppointment(raw: Record<string, unknown>): Appointment {
     reason: (raw.reason as string) || null,
     status: (raw.status as AppointmentStatus) || "PENDING",
     created_at: (raw.createdAt as string) || "",
+    appointmentCode: `LH${String(raw.id).padStart(3, "0")}`,
   }
 }
 
@@ -60,12 +62,8 @@ export const appointmentService = {
   async list(): Promise<AppointmentListResponse> {
     const res = await apiFetch("/api/appointments")
     if (!res.ok) throw new Error("Failed to fetch appointments")
-    const raw = await res.json()
-    const data: Appointment[] = (raw as Record<string, unknown>[]).map(mapAppointment)
-    const sorted = data.sort(
-      (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
-    )
-    return { success: true, data: sorted, total: sorted.length }
+    const rawData = (await res.json()) as Record<string, unknown>[]
+    return { success: true, data: rawData.map(mapAppointment), total: rawData.length }
   },
 
   async create(body: AppointmentCreateRequest): Promise<Appointment> {
@@ -97,6 +95,7 @@ export const appointmentService = {
       reason: body.reason ?? null,
       status: "PENDING",
       created_at: new Date().toISOString(),
+      appointmentCode: `LH${String(result.id).padStart(3, "0")}`,
     }
   },
 
@@ -113,7 +112,7 @@ export const appointmentService = {
       }),
     })
     if (!res.ok) throw new Error("Failed to reschedule")
-    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at, reason: reason ?? null, status: "PENDING", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at, reason: reason ?? null, status: "PENDING", created_at: "", appointmentCode: `LH${String(id).padStart(3, "0")}` }
   },
 
   async cancel(id: number): Promise<Appointment> {
@@ -123,6 +122,6 @@ export const appointmentService = {
       body: JSON.stringify({ status: "CANCELLED" }),
     })
     if (!res.ok) throw new Error("Failed to cancel appointment")
-    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at: "", reason: null, status: "CANCELLED", created_at: "" }
+    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at: "", reason: null, status: "CANCELLED", created_at: "", appointmentCode: `LH${String(id).padStart(3, "0")}` }
   },
 }

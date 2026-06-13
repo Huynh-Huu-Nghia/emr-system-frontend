@@ -14,3 +14,15 @@ export function useConfirmPaymentMutation() {
     onError: () => toast.error("Không thể xác nhận thanh toán"),
   })
 }
+
+export function useCancelPaymentMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => paymentService.cancelPayment(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.payments.all })
+      toast.success("Hủy hóa đơn thành công")
+    },
+    onError: () => toast.error("Không thể hủy hóa đơn"),
+  })
+}

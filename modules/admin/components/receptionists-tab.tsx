@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Pencil, Trash2, Search, RefreshCw } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, RefreshCw, ArrowUp, ArrowDown, Lock, Unlock } from "lucide-react"
 import {
   MasterTable, MasterTableHeader, MasterTableBody,
   TableRow, TableHead, TableCell,
@@ -13,7 +13,7 @@ import { LoadingBlock } from "@/shared/components/states/loading-block"
 import { ErrorState } from "@/shared/components/states/error-state"
 import { EmptyState } from "@/shared/components/states/empty-state"
 import { useReceptionistsQuery } from "@/modules/admin/hooks/use-receptionists-query"
-import { useDeleteReceptionistMutation } from "@/modules/admin/hooks/use-receptionist-mutations"
+import { useDeleteReceptionistMutation, useUpdateReceptionistMutation } from "@/modules/admin/hooks/use-receptionist-mutations"
 import { ReceptionistDialog } from "@/modules/admin/components/receptionist-dialog"
 import { cn } from "@/lib/utils"
 import type { ReceptionistRecord } from "@/core/api/receptionistService"
@@ -23,6 +23,7 @@ const AUTO_REFRESH_INTERVAL = 30_000
 export function ReceptionistsTab() {
   const { data: receptionists = [], isPending, isError, refetch } = useReceptionistsQuery()
   const deleteMutation = useDeleteReceptionistMutation()
+  const updateMutation = useUpdateReceptionistMutation()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingReceptionist, setEditingReceptionist] = useState<ReceptionistRecord | null>(null)
@@ -30,6 +31,7 @@ export function ReceptionistsTab() {
   const [search, setSearch] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,7 +59,15 @@ export function ReceptionistsTab() {
       r.email.toLowerCase().includes(q) ||
       r.phone.includes(q)
     )
-  })
+  }).sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
+
+  const toggleStatus = (recp: ReceptionistRecord) => {
+    const newStatus = recp.status === "ACTIVE" ? "LOCKED" : "ACTIVE"
+    updateMutation.mutate({
+      id: recp.id,
+      data: { status: newStatus },
+    })
+  }
 
   if (isPending) return <LoadingBlock />
   if (isError) return <ErrorState description="Không thể tải danh sách lễ tân" onRetry={() => void refetch()} />
@@ -114,24 +124,44 @@ export function ReceptionistsTab() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Họ tên</TableHead>
+                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                    Mã LT
+                    {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Họ tên</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Username</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">SĐT</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Email</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Phòng ban</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Trạng thái</TableHead>
                 <TableHead className="pr-8 text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Thao tác</TableHead>
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
               {filteredReceptionists.map((recp) => (
                 <TableRow key={recp.id} className="group transition-colors hover:bg-slate-50">
-                  <TableCell className="pl-8 font-semibold text-slate-700">{recp.fullName}</TableCell>
+                  <TableCell className="pl-8 font-mono text-sm font-medium text-medical-primary">{recp.receptionistCode}</TableCell>
+                  <TableCell className="font-semibold text-slate-700">{recp.fullName}</TableCell>
                   <TableCell className="text-sm text-slate-500">{recp.username}</TableCell>
                   <TableCell className="text-sm text-slate-600">{recp.phone}</TableCell>
                   <TableCell className="text-sm text-slate-600">{recp.email}</TableCell>
                   <TableCell className="text-sm text-slate-600">{recp.department}</TableCell>
+                  <TableCell>
+                    {recp.status === "ACTIVE" ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Hoạt động</span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">Đã khóa</span>
+                    )}
+                  </TableCell>
                   <TableCell className="pr-8 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => toggleStatus(recp)}
+                        title={recp.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                        className="rounded-full shadow-none transition-all hover:bg-slate-100">
+                        {recp.status === "ACTIVE" ? <Lock className="h-4 w-4 text-amber-600" /> : <Unlock className="h-4 w-4 text-emerald-600" />}
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(recp)}
                         className="rounded-full shadow-none transition-all hover:bg-slate-100">
                         <Pencil className="h-4 w-4 text-slate-600" />

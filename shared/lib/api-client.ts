@@ -63,7 +63,12 @@ export async function apiFetch(
   init?: RequestInit & { timeoutMs?: number }
 ): Promise<Response> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, signal, ...rest } = init ?? {}
-  const url = resolveApiUrl(path)
+  const cacheBuster = `_t=${Date.now()}`
+  const urlWithCacheBuster = path.includes("?") 
+    ? resolveApiUrl(`${path}&${cacheBuster}`) 
+    : resolveApiUrl(`${path}?${cacheBuster}`)
+
+  const url = urlWithCacheBuster
 
   const controller = new AbortController()
   const onAbortExternal = () => controller.abort(signal?.reason)
@@ -76,6 +81,7 @@ export async function apiFetch(
 
   try {
     const res = await fetch(url, {
+      cache: "no-store",
       ...rest,
       headers: buildHeaders(rest.headers),
       signal: controller.signal,

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Pencil, Trash2, Lock, Unlock, Search, RefreshCw } from "lucide-react"
+import { Plus, Pencil, Trash2, Lock, Unlock, Search, RefreshCw, ArrowUp, ArrowDown } from "lucide-react"
 import {
   MasterTable, MasterTableHeader, MasterTableBody,
   TableRow, TableHead, TableCell,
@@ -31,6 +31,7 @@ export function UsersTab() {
   const [search, setSearch] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,6 +61,7 @@ export function UsersTab() {
       const q = search.toLowerCase()
       return u.username.toLowerCase().includes(q) || String(u.id).includes(q)
     })
+    .sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
 
   const roleBadge = (role: UserRecord["role"]) => {
     const styles: Record<string, string> = {
@@ -132,7 +134,12 @@ export function UsersTab() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="w-16 pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">ID</TableHead>
+                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                    ID
+                    {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                  </Button>
+                </TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Username</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Vai trò</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Trạng thái</TableHead>

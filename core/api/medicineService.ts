@@ -29,6 +29,7 @@ export interface Medicine {
   categoryId: number | null
   categoryName: string | null
   categoryNameVi: string | null
+  medicineCode: string
 }
 
 export interface MedicineCreateRequest {
@@ -47,6 +48,21 @@ export interface MedicineSearchParams {
 
 export type MedicineUpdateRequest = Partial<MedicineCreateRequest>
 
+function mapMedicine(raw: Record<string, unknown>): Medicine {
+  return {
+    id: raw.id as number,
+    name: raw.name as string,
+    unit: raw.unit as string,
+    price: raw.price as number,
+    stockQuantity: raw.stockQuantity as number,
+    expiryDate: raw.expiryDate as string,
+    categoryId: (raw.categoryId as number) ?? null,
+    categoryName: (raw.categoryName as string) ?? null,
+    categoryNameVi: (raw.categoryNameVi as string) ?? null,
+    medicineCode: `TH${String(raw.id).padStart(3, "0")}`,
+  }
+}
+
 export const medicineService = {
   async getAll(params?: MedicineSearchParams): Promise<Medicine[]> {
     const qp = new URLSearchParams()
@@ -55,7 +71,8 @@ export const medicineService = {
     const qs = qp.toString()
     const res = await apiFetch(`/api/medicines${qs ? "?" + qs : ""}`)
     if (!res.ok) throw new Error("Failed to fetch medicines")
-    return res.json()
+    const rawData = await res.json()
+    return (rawData as Record<string, unknown>[]).map(mapMedicine)
   },
 
   async create(data: MedicineCreateRequest): Promise<{ id: number }> {

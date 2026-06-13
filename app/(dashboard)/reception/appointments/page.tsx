@@ -48,6 +48,8 @@ import {
   Ban,
   Search,
   RefreshCw,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -63,6 +65,7 @@ export default function ReceptionAppointmentsPage() {
   const [search, setSearch] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorMode, setEditorMode] = useState<"create" | "reschedule">("create")
@@ -124,7 +127,7 @@ export default function ReceptionAppointmentsPage() {
       }
 
       return true
-    })
+    }).sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
   }, [
     appointments,
     statusFilter,
@@ -132,6 +135,7 @@ export default function ReceptionAppointmentsPage() {
     weekEnd,
     selectedYmd,
     search,
+    sortOrder
   ])
 
   const errMsg = error ? normalizeUnknownError(error).message : undefined
@@ -268,7 +272,13 @@ export default function ReceptionAppointmentsPage() {
         <MasterTable showHeader={false}>
           <MasterTableHeader>
             <TableRow className="border-none hover:bg-transparent">
-              <TableHead className="min-w-[160px] pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+              <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                  Mã Lịch Hẹn
+                  {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                </Button>
+              </TableHead>
+              <TableHead className="min-w-[160px] text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                 Thời gian
               </TableHead>
               <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
@@ -292,13 +302,13 @@ export default function ReceptionAppointmentsPage() {
           <MasterTableBody>
             {isPending ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <LoadingBlock message="Đang tải lịch hẹn…" />
                 </TableCell>
               </TableRow>
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <ErrorState
                     description={errMsg}
                     onRetry={() => void refetch()}
@@ -307,7 +317,7 @@ export default function ReceptionAppointmentsPage() {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="p-0">
+                <TableCell colSpan={7} className="p-0">
                   <EmptyState
                     title="Không có lịch hẹn"
                     description="Thử đổi tuần, bộ lọc trạng thái, hoặc đặt lịch mới."
@@ -320,7 +330,11 @@ export default function ReceptionAppointmentsPage() {
                   key={a.id}
                   className="group transition-colors hover:bg-slate-50"
                 >
-                  <TableCell className="pl-8 text-sm font-semibold text-slate-800">
+                  <TableCell className="pl-8 font-mono text-sm font-medium text-medical-primary">
+                    {a.appointmentCode}
+                  </TableCell>
+
+                  <TableCell className="text-sm font-semibold text-slate-800">
                     {formatDateTimeVi(a.starts_at)}
                   </TableCell>
 
@@ -329,7 +343,7 @@ export default function ReceptionAppointmentsPage() {
                   </TableCell>
 
                   <TableCell className="text-sm font-semibold text-medical-primary">
-                    #{a.medical_history_number}
+                    {a.medical_history_number}
                   </TableCell>
 
                   <TableCell className="hidden max-w-[200px] truncate text-sm text-slate-500 md:table-cell">

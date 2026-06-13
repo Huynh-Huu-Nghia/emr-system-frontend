@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { PageHeader } from "@/components/ui/page-header"
-import { CheckCircle2, Eye, Receipt, RefreshCw, Search, Wifi } from "lucide-react"
+import { Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown, Download, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,7 +25,7 @@ import { LoadingBlock } from "@/shared/components/states/loading-block"
 import { ErrorState } from "@/shared/components/states/error-state"
 import { EmptyState } from "@/shared/components/states/empty-state"
 import { usePaymentsQuery } from "@/modules/admin/hooks/use-payments-query"
-import { useConfirmPaymentMutation } from "@/modules/admin/hooks/use-payment-mutations"
+import { useCancelPaymentMutation } from "@/modules/admin/hooks/use-payment-mutations"
 import type { PaymentRecord } from "@/core/api/paymentService"
 import { cn } from "@/lib/utils"
 
@@ -33,13 +33,18 @@ const AUTO_REFRESH_INTERVAL = 30_000 // 30 seconds
 
 export default function AdminPaymentsPage() {
   const { data: payments = [], isPending, isError, refetch } = usePaymentsQuery()
-  const confirmMutation = useConfirmPaymentMutation()
+  const cancelMutation = useCancelPaymentMutation()
 
   const [viewTarget, setViewTarget] = useState<PaymentRecord | null>(null)
-  const [confirmTarget, setConfirmTarget] = useState<PaymentRecord | null>(null)
+  const [cancelTarget, setCancelTarget] = useState<PaymentRecord | null>(null)
+  
   const [search, setSearch] = useState("")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   // Auto-refresh
   useEffect(() => {
@@ -57,36 +62,92 @@ export default function AdminPaymentsPage() {
     setIsRefreshing(false)
   }, [refetch])
 
-  // Search filter
-  const filteredPayments = payments.filter((p) => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return (
-      p.patientName.toLowerCase().includes(q) ||
-      p.doctorName.toLowerCase().includes(q) ||
-      String(p.id).includes(q)
-    )
-  })
+  // Filter
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) => {
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        if (
+          !p.patientName.toLowerCase().includes(q) &&
+          !p.doctorName.toLowerCase().includes(q) &&
+          !String(p.id).includes(q) &&
+          !p.paymentCode.toLowerCase().includes(q)
+        ) {
+          return false
+        }
+      }
+      
+      if (dateFrom) {
+        const pDate = new Date(p.createdAt).getTime()
+        const fDate = new Date(dateFrom).getTime()
+        if (pDate < fDate) return false
+      }
+      
+      if (dateTo) {
+        const pDate = new Date(p.createdAt)
+        const tDate = new Date(dateTo)
+        // Include the end of the day for dateTo
+        tDate.setHours(23, 59, 59, 999)
+        if (pDate.getTime() > tDate.getTime()) return false
+      }
+
+      return true
+    }).sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
+  }, [payments, search, dateFrom, dateTo, sortOrder])
 
   if (isPending) return <LoadingBlock />
   if (isError) return <ErrorState description="Không thể tải danh sách hóa đơn" onRetry={() => void refetch()} />
 
-  const unpaidCount = payments.filter((p) => p.status === "UNPAID").length
+  const totalRevenue = filteredPayments
+    .filter(p => p.status === "PAID")
+    .reduce((sum, p) => sum + p.totalPrice, 0)
+
+  const exportToCSV = () => {
+    const headers = ["Mã HĐ", "Bệnh nhân", "Bác sĩ", "Tổng tiền", "Trạng thái", "Ngày tạo"]
+    const rows = filteredPayments.map(p => [
+      p.paymentCode,
+      p.patientName,
+      p.doctorName,
+      p.totalPrice.toString(),
+      p.status === "PAID" ? "Đã thanh toán" : p.status === "CANCELLED" ? "Đã hủy" : "Chờ thanh toán",
+      new Date(p.createdAt).toLocaleDateString("vi-VN")
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(c => `"${c}"`).join(","))
+    ].join("\n")
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", `bao-cao-thanh-toan-${new Date().getTime()}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <div className="min-h-screen space-y-8 bg-[#fafafa] p-6 lg:p-8">
       <PageHeader
-        title="Thanh toán"
-        description="Quản lý hóa đơn và xác nhận thu tiền"
+        title="Quản lý Hóa đơn"
+        description="Kiểm soát, theo dõi dòng tiền và báo cáo doanh thu"
       >
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Receipt className="h-4 w-4" />
-          {unpaidCount} chờ thanh toán
+        <div className="flex items-center gap-4 text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            {filteredPayments.length} hóa đơn
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-medical-primary">Tổng thu:</span>
+            <span className="font-mono">{totalRevenue.toLocaleString("vi-VN")}đ</span>
+          </div>
         </div>
       </PageHeader>
 
       {/* Search + Refresh toolbar */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -96,16 +157,42 @@ export default function AdminPaymentsPage() {
             className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
           />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void handleRefresh()}
-          disabled={isRefreshing}
-          className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"
-        >
-          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-          Làm mới
-        </Button>
+        
+        <div className="flex items-center gap-2">
+          <Input 
+            type="date" 
+            value={dateFrom} 
+            onChange={e => setDateFrom(e.target.value)} 
+            className="w-auto rounded-xl border-slate-200 shadow-sm text-slate-600"
+          />
+          <span className="text-slate-400">-</span>
+          <Input 
+            type="date" 
+            value={dateTo} 
+            onChange={e => setDateTo(e.target.value)} 
+            className="w-auto rounded-xl border-slate-200 shadow-sm text-slate-600"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={exportToCSV}
+            className="gap-2 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-white shadow-sm"
+          >
+            <Download className="h-4 w-4" />
+            Xuất Excel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void handleRefresh()}
+            disabled={isRefreshing}
+            className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
       {/* Last updated + live indicator */}
@@ -130,7 +217,12 @@ export default function AdminPaymentsPage() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Mã HĐ</TableHead>
+                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                    Mã HĐ
+                    {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                  </Button>
+                </TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bệnh nhân</TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Bác sĩ</TableHead>
                 <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">Tổng tiền</TableHead>
@@ -142,7 +234,7 @@ export default function AdminPaymentsPage() {
             <MasterTableBody>
               {filteredPayments.map((payment) => (
                 <TableRow key={payment.rowKey} className="group transition-colors hover:bg-slate-50">
-                  <TableCell className="pl-8 font-mono text-sm text-slate-500">#{payment.id}</TableCell>
+                  <TableCell className="pl-8 font-mono text-sm font-medium text-medical-primary">{payment.paymentCode}</TableCell>
                   <TableCell className="font-semibold text-slate-700">{payment.patientName}</TableCell>
                   <TableCell className="text-sm text-slate-600">{payment.doctorName}</TableCell>
                   <TableCell className="text-right font-mono text-sm font-semibold text-slate-700">
@@ -152,6 +244,10 @@ export default function AdminPaymentsPage() {
                     {payment.status === "PAID" ? (
                       <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                         Đã thanh toán
+                      </span>
+                    ) : payment.status === "CANCELLED" ? (
+                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                        Đã hủy
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
@@ -173,15 +269,16 @@ export default function AdminPaymentsPage() {
                       >
                         <Eye className="h-4 w-4 text-slate-600" />
                       </Button>
-                      {payment.status === "UNPAID" && (
+                      
+                      {payment.status !== "CANCELLED" && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setConfirmTarget(payment)}
-                          title="Xác nhận thanh toán"
-                          className="rounded-full shadow-none transition-all hover:bg-emerald-50 hover:text-emerald-600"
+                          onClick={() => setCancelTarget(payment)}
+                          title="Hủy hóa đơn"
+                          className="rounded-full shadow-none transition-all hover:bg-red-50 hover:text-red-600"
                         >
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <XCircle className="h-4 w-4 text-red-600" />
                         </Button>
                       )}
                     </div>
@@ -194,32 +291,99 @@ export default function AdminPaymentsPage() {
       )}
 
       {/* Invoice detail modal */}
-      {/* ... (unchanged) ... */}
+      <MasterModal open={viewTarget != null} onOpenChange={(open) => { if (!open) setViewTarget(null) }}>
+        <MasterModalContent className="sm:max-w-lg">
+          <MasterModalHeader title={viewTarget ? `Hóa đơn #${viewTarget.id}` : ""} />
+          {viewTarget && (
+            <div className="space-y-4 px-6 py-5">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <InvoiceMeta label="Bệnh nhân" value={viewTarget.patientName} />
+                <InvoiceMeta label="Bác sĩ" value={viewTarget.doctorName} />
+                <InvoiceMeta
+                  label="Ngày tạo"
+                  value={viewTarget.createdAt ? new Date(viewTarget.createdAt).toLocaleString("vi-VN") : "---"}
+                />
+                <InvoiceMeta
+                  label="Trạng thái"
+                  value={viewTarget.status === "PAID" ? "Đã thanh toán" : viewTarget.status === "CANCELLED" ? "Đã hủy" : "Chờ thanh toán"}
+                />
+              </div>
 
-      {/* Confirm payment dialog — also triggers refresh on success */}
+              <div className="rounded-lg border border-slate-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-slate-600">Thuốc</th>
+                      <th className="px-3 py-2 text-right font-medium text-slate-600">SL</th>
+                      <th className="px-3 py-2 text-right font-medium text-slate-600">Đơn giá</th>
+                      <th className="px-3 py-2 text-right font-medium text-slate-600">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewTarget.items.map((item, index) => (
+                      <tr key={`${item.medicineName}-${index}`} className="border-t border-slate-100">
+                        <td className="px-3 py-2">{item.medicineName}</td>
+                        <td className="px-3 py-2 text-right">{item.quantity}</td>
+                        <td className="px-3 py-2 text-right font-mono">{item.unitPrice.toLocaleString("vi-VN")}đ</td>
+                        <td className="px-3 py-2 text-right font-mono">{item.subtotal.toLocaleString("vi-VN")}đ</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t-2 border-slate-200 bg-slate-50">
+                    <tr>
+                      <td colSpan={3} className="px-3 py-2 text-right font-semibold">Tổng cộng</td>
+                      <td className="px-3 py-2 text-right font-mono font-bold text-medical-primary">
+                        {viewTarget.totalPrice.toLocaleString("vi-VN")}đ
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <MasterModalFooter>
+                <MasterModalAction variant="secondary" onClick={() => setViewTarget(null)}>
+                  Đóng
+                </MasterModalAction>
+              </MasterModalFooter>
+            </div>
+          )}
+        </MasterModalContent>
+      </MasterModal>
+
+      {/* Cancel payment dialog */}
       <ConfirmDialog
-        open={confirmTarget != null}
-        onOpenChange={(open) => { if (!open) setConfirmTarget(null) }}
-        title="Xác nhận thu tiền"
+        open={cancelTarget != null}
+        onOpenChange={(open) => { if (!open) setCancelTarget(null) }}
+        title="Xác nhận hủy hóa đơn"
         description={
-          confirmTarget ? (
+          cancelTarget ? (
             <span>
-              Xác nhận thu <strong>{confirmTarget.totalPrice.toLocaleString("vi-VN")}đ</strong> từ bệnh nhân <strong>{confirmTarget.patientName}</strong>?
+              Bạn có chắc muốn hủy hóa đơn <strong>{cancelTarget.paymentCode}</strong> trị giá <strong>{cancelTarget.totalPrice.toLocaleString("vi-VN")}đ</strong> của bệnh nhân <strong>{cancelTarget.patientName}</strong>? Hành động này không thể hoàn tác.
             </span>
           ) : null
         }
-        confirmLabel="Xác nhận thanh toán"
-        loading={confirmMutation.isPending}
+        variant="destructive"
+        confirmLabel="Hủy hóa đơn"
+        loading={cancelMutation.isPending}
         onConfirm={() => {
-          if (!confirmTarget) return
-          confirmMutation.mutate(confirmTarget.prescriptionId, {
+          if (!cancelTarget) return
+          cancelMutation.mutate(cancelTarget.prescriptionId, {
             onSuccess: () => {
-              setConfirmTarget(null)
-              void handleRefresh() // refresh immediately after confirming
+              setCancelTarget(null)
+              void handleRefresh()
             },
           })
         }}
       />
+    </div>
+  )
+}
+
+function InvoiceMeta({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-slate-500">{label}</p>
+      <p className="font-medium">{value}</p>
     </div>
   )
 }

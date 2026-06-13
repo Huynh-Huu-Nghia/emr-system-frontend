@@ -9,6 +9,8 @@ export interface ReceptionistRecord {
   phone: string
   email: string
   createdAt: string
+  receptionistCode: string
+  status: string
 }
 
 export interface ReceptionistCreateRequest {
@@ -27,6 +29,22 @@ export interface ReceptionistUpdateRequest {
   department?: string
   phone?: string
   email?: string
+  status?: string
+}
+
+function mapReceptionist(raw: Record<string, unknown>): ReceptionistRecord {
+  return {
+    id: raw.id as number,
+    userId: raw.userId as number,
+    username: raw.username as string,
+    fullName: raw.fullName as string,
+    department: raw.department as string,
+    phone: raw.phone as string,
+    email: raw.email as string,
+    createdAt: raw.createdAt as string,
+    receptionistCode: `LT${String(raw.id).padStart(3, "0")}`,
+    status: (raw.status as string) || "ACTIVE",
+  }
 }
 
 export const receptionistService = {
@@ -36,7 +54,8 @@ export const receptionistService = {
       const err = await res.json().catch(() => ({ error: "Failed to fetch receptionists" }))
       throw new Error(err.error || "Failed to fetch receptionists")
     }
-    return res.json()
+    const rawData = await res.json()
+    return (rawData as Record<string, unknown>[]).map(mapReceptionist)
   },
 
   async getById(id: number): Promise<ReceptionistRecord> {
@@ -45,7 +64,8 @@ export const receptionistService = {
       const err = await res.json().catch(() => ({ error: "Receptionist not found" }))
       throw new Error(err.error || "Receptionist not found")
     }
-    return res.json()
+    const rawData = await res.json()
+    return mapReceptionist(rawData)
   },
 
   async create(data: ReceptionistCreateRequest): Promise<{ id: number }> {

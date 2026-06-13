@@ -38,8 +38,8 @@ export function NotificationBell() {
       <Button
         variant="ghost"
         size="sm"
-        className="relative"
         onClick={() => setOpen(!open)}
+        className="relative hover:bg-slate-100"
       >
         <Bell className="h-5 w-5 text-slate-600" />
         {unreadCount > 0 && (

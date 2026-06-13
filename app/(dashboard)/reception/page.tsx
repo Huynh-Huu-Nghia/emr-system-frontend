@@ -52,7 +52,7 @@ function shortTime(isoLike?: string | null) {
 
 function queueStatusLabel(status?: string) {
   switch ((status || "").toUpperCase()) {
-    case "CALLED": return "Đã gọi"
+    case "CALLED": return "BS Đang Gọi"
     case "IN_PROGRESS": return "Đang khám"
     case "DONE": return "Hoàn tất"
     default: return "Đang chờ"

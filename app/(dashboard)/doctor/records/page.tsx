@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, FileText, Eye, RefreshCw } from "lucide-react"
+import { Search, FileText, Eye, RefreshCw, ArrowUp, ArrowDown } from "lucide-react"
 import {
   MasterTable,
   MasterTableHeader,
@@ -52,6 +52,7 @@ export default function DoctorRecordsPage() {
 
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   const { data: records = [], isPending, isError, refetch } = useQuery({
     queryKey: ["medical-records", "list"],
@@ -73,17 +74,19 @@ export default function DoctorRecordsPage() {
     setIsRefreshing(false)
   }, [refetch])
 
-  const filteredRecords = searchQuery.trim()
+  const filteredRecords = (searchQuery.trim()
     ? records.filter((r) => {
         const q = searchQuery.toLowerCase()
         return (
           r.diagnosis.toLowerCase().includes(q) ||
           r.symptoms.toLowerCase().includes(q) ||
           r.recordType.toLowerCase().includes(q) ||
+          (r.patientName && r.patientName.toLowerCase().includes(q)) ||
           String(r.id).includes(q)
         )
       })
-    : records
+    : [...records]
+  ).sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
 
   const handleView = async (record: MedicalRecord) => {
     setViewTarget(record)
@@ -128,7 +131,7 @@ export default function DoctorRecordsPage() {
     <Input
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder="Tìm theo ID, chẩn đoán, triệu chứng..."
+      placeholder="Tìm theo ID, bệnh nhân, chẩn đoán, triệu chứng..."
       className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
     />
   </div>
@@ -172,8 +175,14 @@ export default function DoctorRecordsPage() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="w-16 pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
-                  ID
+                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
+                    Mã Bệnh Án
+                    {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                  Bệnh nhân
                 </TableHead>
                 <TableHead className="text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                   Chuyên khoa
@@ -199,8 +208,12 @@ export default function DoctorRecordsPage() {
                   key={record.id}
                   className="group transition-colors hover:bg-slate-50"
                 >
-                  <TableCell className="pl-8 font-mono text-sm text-slate-500">
-                    #{record.id}
+                  <TableCell className="pl-8 font-mono text-sm font-medium text-medical-primary">
+                    {record.recordCode}
+                  </TableCell>
+
+                  <TableCell className="font-medium text-slate-800">
+                    {record.patientName || "—"}
                   </TableCell>
 
                   <TableCell>
@@ -250,7 +263,7 @@ export default function DoctorRecordsPage() {
       >
         <MasterModalContent className="sm:max-w-lg">
           <MasterModalHeader
-            title={viewTarget ? `Bệnh án #${viewTarget.id}` : ""}
+            title={viewTarget ? `Bệnh án ${viewTarget.recordCode}` : ""}
           />
 
           {viewTarget && (

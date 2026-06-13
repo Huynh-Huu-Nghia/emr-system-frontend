@@ -7,10 +7,11 @@ export interface PaymentRecord {
   patientName: string
   doctorName: string
   totalPrice: number
-  status: "UNPAID" | "PAID"
+  status: "UNPAID" | "PAID" | "CANCELLED"
   createdAt: string
   paidAt?: string
   items: PaymentItem[]
+  paymentCode: string
 }
 
 export interface PaymentItem {
@@ -42,6 +43,12 @@ export const paymentService = {
     if (!res.ok) throw new Error("Failed to confirm payment")
     return res.json()
   },
+
+  async cancelPayment(id: number): Promise<{ status: string }> {
+    const res = await apiFetch(`/api/payments/${id}/cancel`, { method: "PUT" })
+    if (!res.ok) throw new Error("Failed to cancel payment")
+    return res.json()
+  },
 }
 
 function mapPayment(raw: Record<string, unknown>, index: number): PaymentRecord {
@@ -52,12 +59,13 @@ function mapPayment(raw: Record<string, unknown>, index: number): PaymentRecord 
     rowKey: `${id || "payment"}-${prescriptionId || "prescription"}-${index}`,
     id,
     prescriptionId,
-    patientName: (raw.patientName as string) || "N/A",
-    doctorName: (raw.doctorName as string) || "N/A",
-    totalPrice: Number(raw.totalPrice ?? raw.amount ?? 0),
-    status: backendStatus === "CONFIRMED" ? "PAID" : "UNPAID",
-    createdAt: (raw.createdAt as string) || "",
-    paidAt: (raw.paidAt as string) || undefined,
+    patientName: String(raw.patientName ?? "N/A"),
+    doctorName: String(raw.doctorName ?? "N/A"),
+    totalPrice: Number(raw.amount ?? raw.totalPrice ?? 0),
+    status: backendStatus === "CONFIRMED" ? "PAID" : backendStatus === "CANCELLED" ? "CANCELLED" : "UNPAID",
+    createdAt: String(raw.createdAt || ""),
+    paidAt: raw.paidAt ? String(raw.paidAt) : undefined,
     items: (raw.items as PaymentItem[]) || [],
+    paymentCode: `HD${String(prescriptionId).padStart(3, "0")}`,
   }
 }
