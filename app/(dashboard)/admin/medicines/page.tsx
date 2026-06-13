@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
-import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Plus, Pencil, Trash2, AlertTriangle, Search, RefreshCw } from "lucide-react"
 import {
   MasterTable,
   MasterTableHeader,
@@ -20,7 +21,10 @@ import { useMedicinesQuery } from "@/modules/admin/hooks/use-medicines-query"
 import { useDeleteMedicineMutation } from "@/modules/admin/hooks/use-medicine-mutations"
 import { MedicineDialog } from "@/modules/admin/components/medicine-dialog"
 import { isLowStock, isExpiringSoon, isExpired } from "@/core/api/medicineService"
+import { cn } from "@/lib/utils"
 import type { Medicine } from "@/core/api/medicineService"
+
+const AUTO_REFRESH_INTERVAL = 30_000
 
 export default function AdminMedicinesPage() {
   const { data: medicines = [], isPending, isError, refetch } = useMedicinesQuery()
@@ -29,11 +33,37 @@ export default function AdminMedicinesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Medicine | null>(null)
+  const [search, setSearch] = useState("")
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
+  // Auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void refetch().then(() => setLastUpdated(new Date()))
+    }, AUTO_REFRESH_INTERVAL)
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  // Manual refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refetch()
+    setLastUpdated(new Date())
+    setIsRefreshing(false)
+  }, [refetch])
 
   const handleEdit = (med: Medicine) => {
     setEditingMedicine(med)
     setDialogOpen(true)
   }
+
+  // Search filter — tên thuốc hoặc đơn vị
+  const filteredMedicines = medicines.filter((m) => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return m.name.toLowerCase().includes(q) || m.unit.toLowerCase().includes(q)
+  })
 
   const warningCount = medicines.filter((m) => isLowStock(m) || isExpiringSoon(m) || isExpired(m)).length
 
@@ -62,8 +92,46 @@ export default function AdminMedicinesPage() {
         </div>
       </PageHeader>
 
-      {medicines.length === 0 ? (
-        <EmptyState title="Chưa có thuốc nào trong kho" />
+      {/* Search + Refresh toolbar */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo tên thuốc, đơn vị..."
+            className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleRefresh()}
+          disabled={isRefreshing}
+          className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"
+        >
+          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+          Làm mới
+        </Button>
+      </div>
+
+      {/* Live indicator */}
+      <div className="flex items-center gap-2 -mt-5 pl-1">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
+        <span className="text-xs text-slate-400">
+          Tự động làm mới mỗi 30 giây · Cập nhật lần cuối:{" "}
+          {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+        </span>
+      </div>
+
+      {filteredMedicines.length === 0 ? (
+        <EmptyState
+          title={search ? "Không tìm thấy thuốc nào" : "Chưa có thuốc nào trong kho"}
+          description={search ? `Không có kết quả cho "${search}"` : undefined}
+        />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <MasterTable showHeader={false}>
@@ -79,7 +147,7 @@ export default function AdminMedicinesPage() {
               </TableRow>
             </MasterTableHeader>
             <MasterTableBody>
-              {medicines.map((med) => {
+              {filteredMedicines.map((med) => {
                 const lowStock = isLowStock(med)
                 const expiring = isExpiringSoon(med)
                 const expired = isExpired(med)
@@ -173,7 +241,12 @@ export default function AdminMedicinesPage() {
         loading={deleteMutation.isPending}
         onConfirm={() => {
           if (!deleteTarget) return
-          deleteMutation.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })
+          deleteMutation.mutate(deleteTarget.id, {
+            onSuccess: () => {
+              setDeleteTarget(null)
+              void handleRefresh()
+            },
+          })
         }}
       />
     </div>

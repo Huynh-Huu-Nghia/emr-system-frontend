@@ -16,9 +16,12 @@ import {
 import { ROUTES } from "@/constants/routes"
 import { usePatientsQuery } from "@/modules/patient/hooks/use-patients-query"
 import { useAppointmentsQuery } from "@/modules/appointment/hooks/use-appointments-query"
-import { pushToQueue, useCallQueueMutation, useListenQueue } from "@/shared/queue/queue-stub"
+import {
+  pushToQueue,
+  useCallQueueMutation,
+  useListenQueue,
+} from "@/shared/queue/queue-stub"
 import { formatDateTimeVi, formatDateVi } from "@/shared/lib/format/date"
-import { cn } from "@/lib/utils"
 import type { Appointment } from "@/core/api/appointmentService"
 
 const NO_APPOINTMENT = "__none__"
@@ -52,20 +55,41 @@ export default function ReceptionCheckinPage() {
   const { data: appointments = [] } = useAppointmentsQuery()
 
   const [patientId, setPatientId] = useState<string>("")
-  const [appointmentId, setAppointmentId] = useState<string>(NO_APPOINTMENT)
+  const [appointmentId, setAppointmentId] =
+    useState<string>(NO_APPOINTMENT)
   const [loading, setLoading] = useState(false)
 
+  const patientsWithAppointmentsToday = useMemo(() => {
+    const validAppointments = appointments.filter(
+      (a) =>
+        String(a.status).toUpperCase() === "PENDING" &&
+        isSameLocalCalendarDay(a.starts_at)
+    )
+
+    const patientIds = new Set(
+      validAppointments.map((a) => String(a.patient_id))
+    )
+
+    return patients.filter((p) =>
+      patientIds.has(String(p.id))
+    )
+  }, [patients, appointments])
+
   const selectedPatient = useMemo(
-    () => patients.find((p) => String(p.id) === patientId),
-    [patients, patientId]
+    () =>
+      patientsWithAppointmentsToday.find(
+        (p) => String(p.id) === patientId
+      ),
+    [patientsWithAppointmentsToday, patientId]
   )
 
   const todaysAppointmentsForPatient = useMemo(() => {
     if (!selectedPatient) return []
+
     return appointments.filter(
       (a) =>
-        a.patient_id === selectedPatient.id &&
-        a.status === "PENDING" &&
+        String(a.patient_id) === String(selectedPatient.id) &&
+        String(a.status).toUpperCase() === "PENDING" &&
         isSameLocalCalendarDay(a.starts_at)
     )
   }, [appointments, selectedPatient])
@@ -101,6 +125,7 @@ export default function ReceptionCheckinPage() {
         appointmentId: apptId,
         source: "REGISTERED",
       })
+
       toast.success("Đã check-in — bệnh nhân đã vào hàng đợi")
       setAppointmentId(NO_APPOINTMENT)
       setPatientId("")
@@ -128,17 +153,13 @@ export default function ReceptionCheckinPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-            Check-in (Yêu cầu lịch hẹn)
+            Check-in (Yêu cầu lịch hẹn hôm nay)
           </h2>
 
           <div className="space-y-4">
-            {patients.length === 0 ? (
+            {patientsWithAppointmentsToday.length === 0 ? (
               <p className="text-sm text-amber-800">
-                Chưa có hồ sơ.{" "}
-                <Link className="font-semibold underline" href={ROUTES.RECEPTION.PATIENTS}>
-                  Tạo bệnh nhân
-                </Link>{" "}
-                trước.
+                Hôm nay không có bệnh nhân nào có lịch hẹn.
               </p>
             ) : (
               <>
@@ -146,6 +167,7 @@ export default function ReceptionCheckinPage() {
                   <label className="text-xs font-medium text-slate-500">
                     Bệnh nhân
                   </label>
+
                   <Select
                     value={patientId}
                     onValueChange={(v) => {
@@ -156,8 +178,9 @@ export default function ReceptionCheckinPage() {
                     <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder="Chọn bệnh nhân" />
                     </SelectTrigger>
+
                     <SelectContent>
-                      {patients.map((p) => (
+                      {patientsWithAppointmentsToday.map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>
                           {p.full_name} · #{p.medicalHistoryNumber}
                         </SelectItem>
@@ -165,26 +188,42 @@ export default function ReceptionCheckinPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
                 {selectedPatient && (
                   <div>
                     <label className="text-xs font-medium text-slate-500">
                       Chọn lịch hẹn hôm nay
                     </label>
-                    <Select value={appointmentId} onValueChange={setAppointmentId}>
+
+                    <Select
+                      value={appointmentId}
+                      onValueChange={setAppointmentId}
+                    >
                       <SelectTrigger className="mt-1 w-full">
                         <SelectValue placeholder="Chọn lịch hẹn" />
                       </SelectTrigger>
+
                       <SelectContent>
-                        <SelectItem value={NO_APPOINTMENT} disabled>-- Vui lòng chọn lịch hẹn --</SelectItem>
+                        <SelectItem value={NO_APPOINTMENT} disabled>
+                          -- Vui lòng chọn lịch hẹn --
+                        </SelectItem>
+
                         {todaysAppointmentsForPatient.length === 0 ? (
-                          <SelectItem value="empty" disabled>Không có lịch hẹn nào hôm nay</SelectItem>
+                          <SelectItem value="empty" disabled>
+                            Không có lịch hẹn nào hôm nay
+                          </SelectItem>
                         ) : (
-                          todaysAppointmentsForPatient.map((a: Appointment) => (
-                            <SelectItem key={a.id} value={String(a.id)}>
-                              {formatDateTimeVi(a.starts_at)}
-                              {a.reason ? ` — ${a.reason}` : ""}
-                            </SelectItem>
-                          ))
+                          todaysAppointmentsForPatient.map(
+                            (a: Appointment) => (
+                              <SelectItem
+                                key={a.id}
+                                value={String(a.id)}
+                              >
+                                {formatDateTimeVi(a.starts_at)}
+                                {a.reason ? ` — ${a.reason}` : ""}
+                              </SelectItem>
+                            )
+                          )
                         )}
                       </SelectContent>
                     </Select>
@@ -197,7 +236,10 @@ export default function ReceptionCheckinPage() {
           <Button
             className="w-full rounded-full bg-medical-primary hover:bg-medical-dark sm:w-auto"
             loading={loading}
-            disabled={patients.length === 0 || appointmentId === NO_APPOINTMENT}
+            disabled={
+              patientsWithAppointmentsToday.length === 0 ||
+              appointmentId === NO_APPOINTMENT
+            }
             onClick={() => void handleCheckIn()}
           >
             Check-in — đưa vào hàng đợi
@@ -208,6 +250,7 @@ export default function ReceptionCheckinPage() {
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
             Hàng đợi hiện tại
           </h2>
+
           {queue.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">
               Chưa có bệnh nhân nào. Check-in để đưa vào hàng đợi.
@@ -220,32 +263,50 @@ export default function ReceptionCheckinPage() {
                   className="flex flex-col gap-1 py-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
                 >
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-medium text-slate-800">{q.patientName}</span>
-                    <span className="text-medical-primary">#{q.medicalHistoryNumber}</span>
-                    <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 text-[10px] font-semibold uppercase">
+                    <span className="font-medium text-slate-800">
+                      {q.patientName}
+                    </span>
+                    <span className="text-medical-primary">
+                      #{q.medicalHistoryNumber}
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-800">
                       Lịch hẹn
                     </span>
                   </div>
+
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-400">
                     <span>{formatDateVi(q.enqueuedAt)}</span>
+
                     {q.patientId != null ? (
                       <span>BN id: {q.patientId}</span>
                     ) : null}
+
                     {q.appointmentId != null ? (
                       <span>Lịch: {q.appointmentId}</span>
                     ) : null}
+
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
                       {queueStatusLabel(q.status)}
                     </span>
                   </div>
+
                   <Button
                     type="button"
                     size="sm"
-                    variant={q.status === "CALLED" ? "secondary" : "outline"}
-                    disabled={callQueue.isPending || q.status === "IN_PROGRESS"}
+                    variant={
+                      q.status === "CALLED"
+                        ? "secondary"
+                        : "outline"
+                    }
+                    disabled={
+                      callQueue.isPending ||
+                      q.status === "IN_PROGRESS"
+                    }
                     onClick={() => callQueue.mutate(q.id)}
                   >
-                    {q.status === "CALLED" ? "Gọi tên lại" : "Gọi tên"}
+                    {q.status === "CALLED"
+                      ? "Gọi tên lại"
+                      : "Gọi tên"}
                   </Button>
                 </li>
               ))}

@@ -38,7 +38,7 @@ export const SIDEBAR_MENU: Record<"reception" | "doctor" | "admin", MenuItem[]> 
   admin: [
     { label: "Dashboard", href: ROUTES.ADMIN.DASHBOARD, icon: LayoutDashboard },
     { label: "Nhân viên", href: ROUTES.ADMIN.STAFF, icon: UserCog },
-    { label: "Bác sĩ", href: ROUTES.ADMIN.DOCTORS, icon: Stethoscope },
+    // { label: "Bác sĩ", href: ROUTES.ADMIN.DOCTORS, icon: Stethoscope },
     { label: "Kho thuốc", href: ROUTES.ADMIN.MEDICINES, icon: Pill },
     { label: "Thanh toán", href: ROUTES.ADMIN.PAYMENTS, icon: CreditCard },
     { label: "Cấu hình", href: ROUTES.ADMIN.SETTINGS, icon: Settings },

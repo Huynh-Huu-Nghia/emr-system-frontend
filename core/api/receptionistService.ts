@@ -5,6 +5,7 @@ export interface ReceptionistRecord {
   userId: number
   username: string
   fullName: string
+  department: string
   phone: string
   email: string
   createdAt: string
@@ -14,6 +15,7 @@ export interface ReceptionistCreateRequest {
   username?: string
   password?: string
   fullName: string
+  department: string
   phone: string
   email: string
 }
@@ -22,6 +24,7 @@ export interface ReceptionistUpdateRequest {
   username?: string
   password?: string
   fullName?: string
+  department?: string
   phone?: string
   email?: string
 }

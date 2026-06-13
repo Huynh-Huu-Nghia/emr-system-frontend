@@ -19,30 +19,20 @@ export default function AdminStaffPage() {
       />
 
       <div className="flex space-x-1 rounded-xl bg-slate-100 p-1 w-fit">
-        <button
-          onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            activeTab === "users" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-          }`}
-        >
-          Tất cả Tài khoản
-        </button>
-        <button
-          onClick={() => setActiveTab("doctors")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            activeTab === "doctors" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-          }`}
-        >
-          Hồ sơ Bác sĩ
-        </button>
-        <button
-          onClick={() => setActiveTab("receptionists")}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-            activeTab === "receptionists" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-          }`}
-        >
-          Hồ sơ Lễ tân
-        </button>
+        {(["users", "doctors", "receptionists"] as TabId[]).map((tab) => {
+          const labels = { users: "Hồ sơ Quản trị viên", doctors: "Hồ sơ Bác sĩ", receptionists: "Hồ sơ Lễ tân" }
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeTab === tab ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+              }`}
+            >
+              {labels[tab]}
+            </button>
+          )
+        })}
       </div>
 
       <div className="mt-6">

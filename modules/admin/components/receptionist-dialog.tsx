@@ -20,6 +20,7 @@ const receptionistSchema = z.object({
   username: z.string().min(3, "Tối thiểu 3 ký tự"),
   password: z.string().min(4, "Tối thiểu 4 ký tự").optional().or(z.literal("")),
   fullName: z.string().min(2, "Tối thiểu 2 ký tự"),
+  department: z.string().min(2, "Tối thiểu 2 ký tự"),
   phone: z.string().min(9, "Số điện thoại không hợp lệ"),
   email: z.string().email("Email không hợp lệ"),
 })
@@ -43,6 +44,7 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
       username: "",
       password: "",
       fullName: "",
+      department: "",
       phone: "",
       email: "",
     },
@@ -55,11 +57,12 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
           username: initialData.username,
           password: "",
           fullName: initialData.fullName,
+          department: initialData.department,
           phone: initialData.phone,
           email: initialData.email,
         })
       } else {
-        form.reset({ username: "", password: "", fullName: "", phone: "", email: "" })
+        form.reset({ username: "", password: "", fullName: "", department: "", phone: "", email: "" })
       }
     }
   }, [open, initialData, form])
@@ -71,6 +74,7 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
           id: initialData.id,
           data: {
             fullName: values.fullName,
+            department: values.department,
             phone: values.phone,
             email: values.email,
           },
@@ -83,6 +87,7 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
           username: values.username,
           password: values.password || "default",
           fullName: values.fullName,
+          department: values.department || "Phòng khám",
           phone: values.phone,
           email: values.email,
         },
@@ -117,13 +122,21 @@ export function ReceptionistDialog({ open, onOpenChange, initialData }: Receptio
               </div>
             )}
           </div>
-
+            <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Họ và tên</Label>
             <Input id="fullName" {...form.register("fullName")} placeholder="Trần Thị B" />
             {form.formState.errors.fullName && (
               <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
             )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="department">Phòng ban</Label>
+            <Input id="department" {...form.register("department")} placeholder="Phòng khám" />
+            {form.formState.errors.department && (
+              <p className="text-xs text-red-500">{form.formState.errors.department.message}</p>
+            )}
+          </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

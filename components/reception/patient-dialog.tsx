@@ -275,7 +275,7 @@ export function PatientDialog({
               )}
             />
 
-            {!initialData ? (
+            {/* {!initialData ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <FormField
                   control={form.control}
@@ -341,7 +341,7 @@ export function PatientDialog({
                   </div>
                 ) : null}
               </div>
-            ) : null}
+            ) : null} */}
             </div>
             <DialogFooter>
               <Button

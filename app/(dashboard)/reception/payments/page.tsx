@@ -1,9 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { CheckCircle2, Eye, Receipt } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { CheckCircle2, Eye, Receipt, RefreshCw, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { PageHeader } from "@/components/ui/page-header"
 import {
   Select,
@@ -31,37 +32,58 @@ import { ConfirmDialog } from "@/shared/components/dialog/confirm-dialog"
 import { EmptyState } from "@/shared/components/states/empty-state"
 import { ErrorState } from "@/shared/components/states/error-state"
 import { LoadingBlock } from "@/shared/components/states/loading-block"
+import { cn } from "@/lib/utils"
 import type { PaymentRecord } from "@/core/api/paymentService"
 import { useConfirmPaymentMutation } from "@/modules/admin/hooks/use-payment-mutations"
 import { usePaymentsQuery } from "@/modules/admin/hooks/use-payments-query"
 
+const AUTO_REFRESH_INTERVAL = 30_000
+
 export default function ReceptionPaymentsPage() {
   const { data: payments = [], isPending, isError, refetch } = usePaymentsQuery()
   const confirmPayment = useConfirmPaymentMutation()
+
   const [viewTarget, setViewTarget] = useState<PaymentRecord | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<PaymentRecord | null>(null)
-
   const [filter, setFilter] = useState<"ALL" | "UNPAID" | "PAID">("ALL")
+  const [search, setSearch] = useState("")
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void refetch().then(() => setLastUpdated(new Date()))
+    }, AUTO_REFRESH_INTERVAL)
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refetch()
+    setLastUpdated(new Date())
+    setIsRefreshing(false)
+  }, [refetch])
 
   const unpaidCount = useMemo(
-    () => payments.filter((payment) => payment.status === "UNPAID").length,
+    () => payments.filter((p) => p.status === "UNPAID").length,
     [payments]
   )
 
   const filteredPayments = useMemo(() => {
-    if (filter === "ALL") return payments
-    return payments.filter((payment) => payment.status === filter)
-  }, [payments, filter])
+    const q = search.trim().toLowerCase()
+    return payments.filter((p) => {
+      if (filter !== "ALL" && p.status !== filter) return false
+      if (!q) return true
+      return (
+        p.patientName.toLowerCase().includes(q) ||
+        p.doctorName.toLowerCase().includes(q) ||
+        String(p.id).includes(q)
+      )
+    })
+  }, [payments, filter, search])
 
   if (isPending) return <LoadingBlock />
-  if (isError) {
-    return (
-      <ErrorState
-        description="Không thể tải danh sách hóa đơn"
-        onRetry={() => void refetch()}
-      />
-    )
-  }
+  if (isError) return <ErrorState description="Không thể tải danh sách hóa đơn" onRetry={() => void refetch()} />
 
   return (
     <div className="min-h-screen space-y-8 bg-[#fafafa] p-6 lg:p-8">
@@ -75,11 +97,20 @@ export default function ReceptionPaymentsPage() {
         </div>
       </PageHeader>
 
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-slate-700">Lọc hóa đơn:</label>
+      {/* Search + filter + refresh toolbar */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo tên bệnh nhân, bác sĩ, mã HĐ..."
+            className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
+          />
+        </div>
         <Select value={filter} onValueChange={(v: "ALL" | "UNPAID" | "PAID") => setFilter(v)}>
-          <SelectTrigger className="w-[200px] bg-white">
-            <SelectValue placeholder="Chọn trạng thái" />
+          <SelectTrigger className="w-[180px] rounded-xl border-slate-200 bg-white shadow-sm">
+            <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Tất cả</SelectItem>
@@ -87,12 +118,40 @@ export default function ReceptionPaymentsPage() {
             <SelectItem value="PAID">Đã thanh toán</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleRefresh()}
+          disabled={isRefreshing}
+          className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"
+        >
+          <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+          Làm mới
+        </Button>
+      </div>
+
+      {/* Live indicator */}
+      <div className="flex items-center gap-2 -mt-5 pl-1">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
+        <span className="text-xs text-slate-400">
+          Tự động làm mới mỗi 30 giây · Cập nhật lần cuối:{" "}
+          {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+        </span>
       </div>
 
       {filteredPayments.length === 0 ? (
         <EmptyState
-          title="Chưa có hóa đơn nào"
-          description="Hóa đơn sẽ xuất hiện sau khi bác sĩ lưu đơn thuốc."
+          title={search || filter !== "ALL" ? "Không tìm thấy hóa đơn nào" : "Chưa có hóa đơn nào"}
+          description={
+            search
+              ? `Không có kết quả cho "${search}"`
+              : filter !== "ALL"
+                ? "Thử chọn trạng thái khác."
+                : "Hóa đơn sẽ xuất hiện sau khi bác sĩ lưu đơn thuốc."
+          }
         />
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -129,9 +188,7 @@ export default function ReceptionPaymentsPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-slate-500">
-                    {payment.createdAt
-                      ? new Date(payment.createdAt).toLocaleDateString("vi-VN")
-                      : "---"}
+                    {payment.createdAt ? new Date(payment.createdAt).toLocaleDateString("vi-VN") : "---"}
                   </TableCell>
                   <TableCell className="pr-8 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -144,7 +201,7 @@ export default function ReceptionPaymentsPage() {
                       >
                         <Eye className="h-4 w-4 text-slate-600" />
                       </Button>
-                      {payment.status === "UNPAID" ? (
+                      {payment.status === "UNPAID" && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -154,7 +211,7 @@ export default function ReceptionPaymentsPage() {
                         >
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         </Button>
-                      ) : null}
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -164,26 +221,17 @@ export default function ReceptionPaymentsPage() {
         </div>
       )}
 
-      <MasterModal
-        open={viewTarget != null}
-        onOpenChange={(open) => {
-          if (!open) setViewTarget(null)
-        }}
-      >
+      <MasterModal open={viewTarget != null} onOpenChange={(open) => { if (!open) setViewTarget(null) }}>
         <MasterModalContent className="sm:max-w-lg">
           <MasterModalHeader title={viewTarget ? `Hóa đơn #${viewTarget.id}` : ""} />
-          {viewTarget ? (
+          {viewTarget && (
             <div className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <InvoiceMeta label="Bệnh nhân" value={viewTarget.patientName} />
                 <InvoiceMeta label="Bác sĩ" value={viewTarget.doctorName} />
                 <InvoiceMeta
                   label="Ngày tạo"
-                  value={
-                    viewTarget.createdAt
-                      ? new Date(viewTarget.createdAt).toLocaleString("vi-VN")
-                      : "---"
-                  }
+                  value={viewTarget.createdAt ? new Date(viewTarget.createdAt).toLocaleString("vi-VN") : "---"}
                 />
                 <InvoiceMeta
                   label="Trạng thái"
@@ -206,20 +254,14 @@ export default function ReceptionPaymentsPage() {
                       <tr key={`${item.medicineName}-${index}`} className="border-t border-slate-100">
                         <td className="px-3 py-2">{item.medicineName}</td>
                         <td className="px-3 py-2 text-right">{item.quantity}</td>
-                        <td className="px-3 py-2 text-right font-mono">
-                          {item.unitPrice.toLocaleString("vi-VN")}đ
-                        </td>
-                        <td className="px-3 py-2 text-right font-mono">
-                          {item.subtotal.toLocaleString("vi-VN")}đ
-                        </td>
+                        <td className="px-3 py-2 text-right font-mono">{item.unitPrice.toLocaleString("vi-VN")}đ</td>
+                        <td className="px-3 py-2 text-right font-mono">{item.subtotal.toLocaleString("vi-VN")}đ</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="border-t-2 border-slate-200 bg-slate-50">
                     <tr>
-                      <td colSpan={3} className="px-3 py-2 text-right font-semibold">
-                        Tổng cộng
-                      </td>
+                      <td colSpan={3} className="px-3 py-2 text-right font-semibold">Tổng cộng</td>
                       <td className="px-3 py-2 text-right font-mono font-bold text-medical-primary">
                         {viewTarget.totalPrice.toLocaleString("vi-VN")}đ
                       </td>
@@ -234,21 +276,18 @@ export default function ReceptionPaymentsPage() {
                 </MasterModalAction>
               </MasterModalFooter>
             </div>
-          ) : null}
+          )}
         </MasterModalContent>
       </MasterModal>
 
       <ConfirmDialog
         open={confirmTarget != null}
-        onOpenChange={(open) => {
-          if (!open) setConfirmTarget(null)
-        }}
+        onOpenChange={(open) => { if (!open) setConfirmTarget(null) }}
         title="Xác nhận thu tiền"
         description={
           confirmTarget ? (
             <span>
-              Xác nhận thu{" "}
-              <strong>{confirmTarget.totalPrice.toLocaleString("vi-VN")}đ</strong>{" "}
+              Xác nhận thu <strong>{confirmTarget.totalPrice.toLocaleString("vi-VN")}đ</strong>{" "}
               từ bệnh nhân <strong>{confirmTarget.patientName}</strong>?
             </span>
           ) : null
@@ -258,7 +297,7 @@ export default function ReceptionPaymentsPage() {
         onConfirm={() => {
           if (!confirmTarget) return
           confirmPayment.mutate(confirmTarget.prescriptionId, {
-            onSuccess: () => setConfirmTarget(null),
+            onSuccess: () => { setConfirmTarget(null); void handleRefresh() },
           })
         }}
       />

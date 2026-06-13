@@ -26,16 +26,17 @@ export default function ProfilePage() {
   
   // Basic states for mock form
   const [formData, setFormData] = useState({
-    username: "",
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
-    dob: "",
-    gender: "",
-    specialty: "",
-    roomNumber: ""
-  })
+  username: "",
+  fullName: "",
+  email: "",
+  phone: "",
+  address: "",
+  dob: "",
+  gender: "",
+  specialty: "",
+  roomNumber: "",
+  department: ""
+})
   const [isSaving, setIsSaving] = useState(false)
 
   // Load initial data
@@ -46,6 +47,7 @@ export default function ProfilePage() {
         username: user.username || "",
         fullName: user.fullName || "",
         email: user.email || "",
+        
       }))
     }
   }, [user])
@@ -117,6 +119,7 @@ export default function ProfilePage() {
         </section>
 
         {/* Card: Thông tin Liên hệ & Chi tiết */}
+        {( isReceptionist || isDoctor) && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-medical-light text-medical-primary">
@@ -200,7 +203,7 @@ export default function ProfilePage() {
               </>
             )}
           </div>
-        </section>
+        </section>)}
 
         {/* Card: Thông tin Chuyên môn (Only for Doctors) */}
         {isDoctor && (
@@ -244,6 +247,35 @@ export default function ProfilePage() {
             </div>
           </section>
         )}
+
+        {/* Card: Thông tin Phòng ban (Only for ) */}
+        {isReceptionist && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-medical-light text-medical-primary">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-800">Thông tin Phòng ban</h2>
+                <p className="text-sm text-slate-500">Chi tiết công tác của lễ tân</p>
+              </div>
+            </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-700">Phòng ban</Label>
+                <div className="relative">
+                  <Input 
+                    value={formData.department} 
+                    onChange={(e) => handleInputChange("department", e.target.value)} 
+                    className="pl-10 focus-visible:ring-medical-primary" 
+                    placeholder="Vd: P.101"
+                  />
+                  <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                </div>
+              </div>
+          </section>
+        )}
+          
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4 pt-4">

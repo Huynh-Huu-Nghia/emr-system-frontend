@@ -1,9 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   MasterTable,
   MasterTableHeader,
@@ -17,7 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { Appointment, AppointmentStatus } from "@/core/api/appointmentService"
+import type {
+  Appointment,
+  AppointmentStatus,
+} from "@/core/api/appointmentService"
 import { ROUTES } from "@/constants/routes"
 import { usePatientsQuery } from "@/modules/patient/hooks/use-patients-query"
 import { useDoctorsQuery } from "@/modules/admin/hooks/use-doctors-query"
@@ -38,25 +42,38 @@ import {
   startOfWeekMonday,
   ymdLocal,
 } from "@/modules/appointment/lib/calendar-utils"
-import { Plus, Pencil, Ban } from "lucide-react"
+import {
+  Plus,
+  Pencil,
+  Ban,
+  Search,
+  RefreshCw,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 type StatusFilter = "ALL" | AppointmentStatus
+
+const AUTO_REFRESH_INTERVAL = 30_000
 
 export default function ReceptionAppointmentsPage() {
   const [anchorDate, setAnchorDate] = useState(() => new Date())
   const [selectedYmd, setSelectedYmd] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL")
 
+  const [search, setSearch] = useState("")
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorMode, setEditorMode] = useState<"create" | "reschedule">("create")
-  const [editorAppointment, setEditorAppointment] = useState<Appointment | null>(
-    null
-  )
+  const [editorAppointment, setEditorAppointment] =
+    useState<Appointment | null>(null)
 
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null)
 
   const { data: patients = [] } = usePatientsQuery()
   const { data: doctors = [] } = useDoctorsQuery()
+
   const {
     data: appointments = [],
     isPending,
@@ -67,6 +84,21 @@ export default function ReceptionAppointmentsPage() {
 
   const cancelMut = useCancelAppointmentMutation()
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void refetch().then(() => setLastUpdated(new Date()))
+    }, AUTO_REFRESH_INTERVAL)
+
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    await refetch()
+    setLastUpdated(new Date())
+    setIsRefreshing(false)
+  }, [refetch])
+
   const weekStart = useMemo(() => startOfWeekMonday(anchorDate), [anchorDate])
   const weekEnd = useMemo(() => endOfWeekSunday(weekStart), [weekStart])
 
@@ -74,13 +106,33 @@ export default function ReceptionAppointmentsPage() {
     return appointments.filter((a) => {
       if (statusFilter !== "ALL" && a.status !== statusFilter) return false
       if (!isIsoInRange(a.starts_at, weekStart, weekEnd)) return false
+
       if (selectedYmd) {
         const key = ymdLocal(new Date(a.starts_at))
         if (key !== selectedYmd) return false
       }
+
+      if (search.trim()) {
+        const q = search.toLowerCase()
+
+        const matched =
+          a.patient_name.toLowerCase().includes(q) ||
+          a.medical_history_number.toString().toLowerCase().includes(q) ||
+          (a.reason ?? "").toLowerCase().includes(q)
+
+        if (!matched) return false
+      }
+
       return true
     })
-  }, [appointments, statusFilter, weekStart, weekEnd, selectedYmd])
+  }, [
+    appointments,
+    statusFilter,
+    weekStart,
+    weekEnd,
+    selectedYmd,
+    search,
+  ])
 
   const errMsg = error ? normalizeUnknownError(error).message : undefined
 
@@ -106,6 +158,7 @@ export default function ReceptionAppointmentsPage() {
           <Button variant="outline" asChild className="rounded-full">
             <Link href={ROUTES.RECEPTION.PATIENTS}>Hồ sơ bệnh nhân</Link>
           </Button>
+
           <Button
             className="rounded-full bg-medical-primary hover:bg-medical-dark"
             onClick={openCreate}
@@ -120,7 +173,10 @@ export default function ReceptionAppointmentsPage() {
       {patients.length === 0 ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Chưa có bệnh nhân trong hệ thống. Vui lòng{" "}
-          <Link className="font-semibold underline" href={ROUTES.RECEPTION.PATIENTS}>
+          <Link
+            className="font-semibold underline"
+            href={ROUTES.RECEPTION.PATIENTS}
+          >
             tạo hồ sơ bệnh nhân
           </Link>{" "}
           trước khi đặt lịch.
@@ -138,14 +194,57 @@ export default function ReceptionAppointmentsPage() {
         onSelectYmd={setSelectedYmd}
       />
 
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm bệnh nhân, mã HS, lý do..."
+            className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleRefresh()}
+          disabled={isRefreshing}
+          className="gap-2 rounded-xl border-slate-200 bg-white shadow-sm"
+        >
+          <RefreshCw
+            className={cn("h-4 w-4", isRefreshing && "animate-spin")}
+          />
+          Làm mới
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 -mt-5 pl-1">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        </span>
+
+        <span className="text-xs text-slate-400">
+          Tự động làm mới mỗi 30 giây · Cập nhật lần cuối:{" "}
+          {lastUpdated.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
+        </span>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-medium text-slate-600">
           {filtered.length} lịch trong khung hiển thị
         </p>
+
         <div className="w-full sm:w-56">
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             Trạng thái
           </label>
+
           <Select
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as StatusFilter)}
@@ -153,6 +252,7 @@ export default function ReceptionAppointmentsPage() {
             <SelectTrigger className="mt-1 w-full" size="sm">
               <SelectValue />
             </SelectTrigger>
+
             <SelectContent>
               <SelectItem value="ALL">Tất cả</SelectItem>
               <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
@@ -188,6 +288,7 @@ export default function ReceptionAppointmentsPage() {
               </TableHead>
             </TableRow>
           </MasterTableHeader>
+
           <MasterTableBody>
             {isPending ? (
               <TableRow>
@@ -198,7 +299,10 @@ export default function ReceptionAppointmentsPage() {
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={6} className="p-0">
-                  <ErrorState description={errMsg} onRetry={() => void refetch()} />
+                  <ErrorState
+                    description={errMsg}
+                    onRetry={() => void refetch()}
+                  />
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
@@ -212,22 +316,30 @@ export default function ReceptionAppointmentsPage() {
               </TableRow>
             ) : (
               filtered.map((a) => (
-                <TableRow key={a.id} className="group transition-colors hover:bg-slate-50">
+                <TableRow
+                  key={a.id}
+                  className="group transition-colors hover:bg-slate-50"
+                >
                   <TableCell className="pl-8 text-sm font-semibold text-slate-800">
                     {formatDateTimeVi(a.starts_at)}
                   </TableCell>
+
                   <TableCell className="text-sm font-medium text-slate-700">
                     {a.patient_name}
                   </TableCell>
+
                   <TableCell className="text-sm font-semibold text-medical-primary">
                     #{a.medical_history_number}
                   </TableCell>
+
                   <TableCell className="hidden max-w-[200px] truncate text-sm text-slate-500 md:table-cell">
                     {a.reason || "—"}
                   </TableCell>
+
                   <TableCell>
                     <AppointmentStatusBadge status={a.status} />
                   </TableCell>
+
                   <TableCell className="pr-8 text-right">
                     {a.status === "PENDING" ? (
                       <div className="flex justify-end gap-2">
@@ -241,6 +353,7 @@ export default function ReceptionAppointmentsPage() {
                         >
                           <Pencil className="h-4 w-4 text-slate-600" />
                         </Button>
+
                         <Button
                           type="button"
                           variant="ghost"
