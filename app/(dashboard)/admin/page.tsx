@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
 import { dashboardService } from "@/core/api/dashboardService"
 import { queryKeys } from "@/shared/query/query-keys"
 import { LoadingBlock } from "@/shared/components/states/loading-block"
@@ -30,6 +30,9 @@ const ACTION_LABELS: Record<string, string> = {
   CALL_QUEUE: "Gọi vào khám",
   UPDATE_CATEGORY: "Cập nhật danh mục thuốc",
   CREATE_CATEGORY: "Thêm danh mục thuốc",
+  COMPLETE_QUEUE: "Hoàn thành khám hàng đợi",
+  CREATE_PRESCRIPTION: "Kê đơn thuốc",
+  START_EXAM: "Bắt đầu khám",
 }
 
 const formatActor = (actor: string) => {
@@ -53,6 +56,8 @@ const formatTarget = (target: string) => {
   t = t.replace(/medicine #(\d+)/g, "Thuốc #$1")
   t = t.replace(/invoice #(\d+)/g, "Hóa đơn #$1")
   t = t.replace(/payment #(\d+)/g, "Giao dịch #$1")
+  t = t.replace(/prescription #(\d+)/g, "Đơn thuốc #$1")
+  t = t.replace(/medical_record #(\d+)/g, "Hồ sơ bệnh án #$1")
   return t
 }
 
@@ -71,11 +76,13 @@ export default function AdminDashboardPage() {
   const statsQuery = useQuery({
     queryKey: [...queryKeys.dashboard.stats(), timeframe],
     queryFn: () => dashboardService.getStats(timeframe),
+    placeholderData: keepPreviousData,
   })
 
   const auditQuery = useQuery({
-    queryKey: queryKeys.dashboard.auditLog(),
-    queryFn: () => dashboardService.getAuditLog(),
+    queryKey: [...queryKeys.dashboard.auditLog(), timeframe],
+    queryFn: () => dashboardService.getAuditLog(timeframe),
+    placeholderData: keepPreviousData,
   })
 
   if (statsQuery.isPending) return <LoadingBlock />
@@ -85,8 +92,8 @@ export default function AdminDashboardPage() {
   const auditLog = auditQuery.data ?? []
 
   const kpiCards = [
-    { label: "Doanh thu", value: `${(stats.todayRevenue / 1_000_000).toFixed(1)}M`, icon: DollarSign, color: "bg-medical-primary", subtext: "Kỳ báo cáo" },
-    { label: "Lịch hẹn hoàn tất", value: `${stats.completedAppointments} / ${stats.todayAppointments}`, icon: CalendarDays, color: "bg-purple-500", subtext: "Kỳ báo cáo" },
+    { label: "Doanh thu", value: `${(stats.periodRevenue / 1_000_000).toFixed(1)}M`, icon: DollarSign, color: "bg-medical-primary", subtext: "Kỳ báo cáo" },
+    { label: "Lịch hẹn hoàn tất", value: `${stats.completedAppointments} / ${stats.periodAppointments}`, icon: CalendarDays, color: "bg-purple-500", subtext: "Kỳ báo cáo" },
     { label: "HĐ chưa thanh toán", value: stats.unpaidInvoices, icon: AlertCircle, color: "bg-amber-500", subtext: "Toàn bộ" },
     { label: "Bệnh nhân mới", value: stats.newPatients ?? 0, icon: Activity, color: "bg-teal-500", subtext: "Kỳ báo cáo" },
     { label: "Tổng bác sĩ", value: stats.totalDoctors, icon: Stethoscope, color: "bg-emerald-500", subtext: "Toàn bộ" },
@@ -109,8 +116,8 @@ export default function AdminDashboardPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="today">Hôm nay</SelectItem>
-            <SelectItem value="week">Tuần này</SelectItem>
-            <SelectItem value="month">Tháng này</SelectItem>
+            <SelectItem value="week">7 ngày qua</SelectItem>
+            <SelectItem value="month">30 ngày qua</SelectItem>
             <SelectItem value="year">Năm nay</SelectItem>
             <SelectItem value="all">Tất cả thời gian</SelectItem>
           </SelectContent>
@@ -142,7 +149,7 @@ export default function AdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-7">
         {/* Doanh thu theo tháng */}
         <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">Doanh thu theo tháng</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-800">Biểu đồ doanh thu năm hiện tại (Current Year)</h3>
           <div className="flex h-64 items-end justify-between gap-2 px-4">
             {monthlyRev.map((val, idx) => {
               const height = (val / maxRev) * 100

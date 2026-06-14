@@ -11,10 +11,10 @@ export interface DashboardStats {
   totalDoctors: number
   totalPatients: number
   newPatients: number
-  todayAppointments: number
+  periodAppointments: number
   completedAppointments: number
   revenue: number
-  todayRevenue: number
+  periodRevenue: number
   monthlyRevenue: number[]
   unpaidInvoices: number
   topMedicines: TopMedicine[]
@@ -40,8 +40,8 @@ export const dashboardService = {
     }
   },
 
-  async getAuditLog(): Promise<AuditLogEntry[]> {
-    const res = await apiFetch("/api/audit-log")
+  async getAuditLog(timeframe: string = "all"): Promise<AuditLogEntry[]> {
+    const res = await apiFetch(`/api/audit-log?timeframe=${timeframe}`)
     if (!res.ok) throw new Error("Failed to fetch audit log")
     return res.json()
   },

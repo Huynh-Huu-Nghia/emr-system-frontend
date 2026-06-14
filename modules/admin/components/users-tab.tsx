@@ -32,6 +32,10 @@ export function UsersTab() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -63,6 +67,30 @@ export function UsersTab() {
     })
     .sort((a, b) => sortOrder === "asc" ? a.id - b.id : b.id - a.id)
 
+  const toggleAll = () => {
+    if (selectedIds.length === adminUsers.length && adminUsers.length > 0) setSelectedIds([])
+    else setSelectedIds(adminUsers.map(u => u.id))
+  }
+
+  const toggleRow = (id: number) => {
+    if (selectedIds.includes(id)) setSelectedIds(selectedIds.filter(i => i !== id))
+    else setSelectedIds([...selectedIds, id])
+  }
+
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true)
+    try {
+      await Promise.all(selectedIds.map((id) => deleteMutation.mutateAsync(id)))
+      setSelectedIds([])
+      void handleRefresh()
+    } catch {
+      // errors are handled by mutation toast
+    } finally {
+      setIsBulkDeleting(false)
+      setBulkDeleteDialogOpen(false)
+    }
+  }
+
   const roleBadge = (role: UserRecord["role"]) => {
     const styles: Record<string, string> = {
       ADMIN: "bg-purple-100 text-purple-700", DOCTOR: "bg-blue-100 text-blue-700",
@@ -86,15 +114,24 @@ export function UsersTab() {
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo username, ID..."
-            className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
-          />
-        </div>
+        {selectedIds.length > 0 ? (
+          <div className="flex-1 flex items-center gap-2 bg-red-50 text-red-600 px-4 h-10 rounded-xl border border-red-100">
+            <span className="text-sm font-medium">Đã chọn {selectedIds.length} mục</span>
+            <Button variant="ghost" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} className="ml-auto hover:bg-red-100 hover:text-red-700 h-8">
+              <Trash2 className="h-4 w-4 mr-2" /> Xóa các mục đã chọn
+            </Button>
+          </div>
+        ) : (
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm theo username, ID..."
+              className="pl-9 h-10 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
+            />
+          </div>
+        )}
         <Button
           variant="outline" size="sm"
           onClick={() => void handleRefresh()}
@@ -134,7 +171,13 @@ export function UsersTab() {
           <MasterTable showHeader={false}>
             <MasterTableHeader>
               <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="w-24 pl-6 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+                <TableHead className="w-12 pl-6">
+                  <input type="checkbox" className="rounded border-slate-300 w-4 h-4 accent-medical-primary cursor-pointer"
+                    checked={selectedIds.length > 0 && selectedIds.length === adminUsers.length}
+                    onChange={toggleAll}
+                  />
+                </TableHead>
+                <TableHead className="w-24 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
                   <Button variant="ghost" className="-ml-3 h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100" onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}>
                     ID
                     {sortOrder === "desc" ? <ArrowDown className="ml-1.5 h-3 w-3" /> : <ArrowUp className="ml-1.5 h-3 w-3" />}
@@ -150,7 +193,13 @@ export function UsersTab() {
             <MasterTableBody>
               {adminUsers.map((user) => (
                 <TableRow key={user.id} className="group transition-colors hover:bg-slate-50">
-                  <TableCell className="pl-8 font-mono text-sm text-slate-500">{user.id}</TableCell>
+                  <TableCell className="pl-6">
+                    <input type="checkbox" className="rounded border-slate-300 w-4 h-4 accent-medical-primary cursor-pointer"
+                      checked={selectedIds.includes(user.id)}
+                      onChange={() => toggleRow(user.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="font-mono text-sm text-slate-500">{user.id}</TableCell>
                   <TableCell className="font-medium text-slate-700">{user.username}</TableCell>
                   <TableCell>{roleBadge(user.role)}</TableCell>
                   <TableCell>{statusBadge(user.status)}</TableCell>
@@ -193,6 +242,15 @@ export function UsersTab() {
           if (!deleteTarget) return
           deleteMutation.mutate(deleteTarget.id, { onSuccess: () => { setDeleteTarget(null); void handleRefresh() } })
         }}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title="Xác nhận xóa hàng loạt"
+        description={<span>Bạn có chắc muốn xóa <strong>{selectedIds.length}</strong> tài khoản đã chọn? Hành động này không thể hoàn tác.</span>}
+        variant="destructive" confirmLabel="Xóa tất cả" loading={isBulkDeleting}
+        onConfirm={() => void handleBulkDelete()}
       />
     </div>
   )
