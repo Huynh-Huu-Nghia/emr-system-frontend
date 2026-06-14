@@ -14,7 +14,7 @@ import { PatientFiltersToolbar } from "@/modules/patient/components/patient-filt
 import { PatientsTable } from "@/modules/patient/components/patients-table"
 import { filterPatients } from "@/modules/patient/lib/filter-patients"
 import { cn } from "@/lib/utils"
-import type { Patient, PatientGenderFilter, PatientInsuranceFilter } from "@/modules/patient/types"
+import type { Patient, PatientGenderFilter, PatientInsuranceFilter, PatientSortOption } from "@/modules/patient/types"
 
 const AUTO_REFRESH_INTERVAL = 30_000
 
@@ -27,6 +27,7 @@ export default function PatientsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [genderFilter, setGenderFilter] = useState<PatientGenderFilter>("ALL")
   const [insuranceFilter, setInsuranceFilter] = useState<PatientInsuranceFilter>("ALL")
+  const [sortBy, setSortBy] = useState<PatientSortOption>("NEWEST")
   const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null)
   const [viewTarget, setViewTarget] = useState<Patient | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -49,8 +50,8 @@ export default function PatientsPage() {
   }, [refetch])
 
   const filteredPatients = useMemo(
-    () => filterPatients(patients, { searchQuery, genderFilter, insuranceFilter }),
-    [patients, searchQuery, genderFilter, insuranceFilter]
+    () => filterPatients(patients, { searchQuery, genderFilter, insuranceFilter, sortBy }),
+    [patients, searchQuery, genderFilter, insuranceFilter, sortBy]
   )
 
   const errorMessage = error != null ? normalizeUnknownError(error).message : undefined
@@ -59,6 +60,7 @@ export default function PatientsPage() {
     setSearchQuery("")
     setGenderFilter("ALL")
     setInsuranceFilter("ALL")
+    setSortBy("NEWEST")
   }
 
   const handleOpenDialog = (patient: Patient | null = null) => {
@@ -111,6 +113,8 @@ export default function PatientsPage() {
           onGenderChange={setGenderFilter}
           insuranceFilter={insuranceFilter}
           onInsuranceChange={setInsuranceFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
           onClearFilters={clearFilters}
         />
         <PatientsTable

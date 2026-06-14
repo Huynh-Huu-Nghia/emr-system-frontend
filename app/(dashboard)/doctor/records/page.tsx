@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, FileText, Eye, RefreshCw, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, FileText, Eye, RefreshCw, ArrowUp, ArrowDown, Printer } from "lucide-react"
 import {
   MasterTable,
   MasterTableHeader,
@@ -373,6 +373,16 @@ export default function DoctorRecordsPage() {
                 )}
 
               <MasterModalFooter>
+                {prescription && prescription.details && prescription.details.length > 0 && (
+                  <Button
+                    variant="default"
+                    onClick={() => window.open(`/print/prescription/${viewTarget.id}`, '_blank')}
+                    className="mr-auto gap-2"
+                  >
+                    <Printer className="h-4 w-4" />
+                    In Toa Thuốc
+                  </Button>
+                )}
                 <MasterModalAction
                   variant="secondary"
                   onClick={() => setViewTarget(null)}

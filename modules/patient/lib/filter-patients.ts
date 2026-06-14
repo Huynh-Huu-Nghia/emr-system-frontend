@@ -2,6 +2,7 @@ import type { Patient } from "@/modules/patient/types"
 import type {
   PatientGenderFilter,
   PatientInsuranceFilter,
+  PatientSortOption,
 } from "@/modules/patient/types"
 
 export function filterPatients(

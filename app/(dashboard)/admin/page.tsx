@@ -8,6 +8,9 @@ import { LoadingBlock } from "@/shared/components/states/loading-block"
 import { ErrorState } from "@/shared/components/states/error-state"
 import { PageHeader } from "@/components/ui/page-header"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from "recharts"
 import {
   Users,
   Stethoscope,
@@ -16,6 +19,7 @@ import {
   AlertCircle,
   Activity,
   Package,
+  Printer
 } from "lucide-react"
 
 const ACTION_LABELS: Record<string, string> = {
@@ -67,27 +71,38 @@ const formatTarget = (target: string) => {
 
 const formatTimestamp = (ts: string) => {
   if (!ts) return ""
-  // Parse as UTC if it doesn't already have Z or +
   const dateStr = ts.includes('Z') || ts.includes('+') ? ts : ts.replace(' ', 'T') + 'Z'
   return new Date(dateStr).toLocaleString("vi-VN", {
     hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
   })
 }
 
+const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#f43f5e']
+
 export default function AdminDashboardPage() {
   const [timeframe, setTimeframe] = useState("today")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
 
   const statsQuery = useQuery({
-    queryKey: [...queryKeys.dashboard.stats(), timeframe],
-    queryFn: () => dashboardService.getStats(timeframe),
+    queryKey: [...queryKeys.dashboard.stats(), timeframe, startDate, endDate],
+    queryFn: () => dashboardService.getStats(timeframe, startDate, endDate),
     placeholderData: keepPreviousData,
   })
 
   const auditQuery = useQuery({
-    queryKey: [...queryKeys.dashboard.auditLog(), timeframe],
-    queryFn: () => dashboardService.getAuditLog(timeframe),
+    queryKey: [...queryKeys.dashboard.auditLog(), timeframe, startDate, endDate],
+    queryFn: () => dashboardService.getAuditLog(timeframe, startDate, endDate),
     placeholderData: keepPreviousData,
   })
+
+  const handlePrint = () => {
+    let url = `/print/report?timeframe=${timeframe}`
+    if (timeframe === "custom" && startDate && endDate) {
+      url += `&startDate=${startDate}&endDate=${endDate}`
+    }
+    window.open(url, '_blank')
+  }
 
   if (statsQuery.isPending) return <LoadingBlock />
   if (statsQuery.isError) return <ErrorState description="Không thể tải dữ liệu dashboard" onRetry={() => void statsQuery.refetch()} />
@@ -109,23 +124,57 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen space-y-8 bg-[#fafafa] p-6 lg:p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           title="Dashboard Admin"
-          description="Tổng quan hoạt động hệ thống phòng khám"
+          description="Tổng quan hoạt động và thống kê báo cáo hệ thống"
         />
-        <Select value={timeframe} onValueChange={setTimeframe}>
-          <SelectTrigger className="w-[180px] bg-white">
-            <SelectValue placeholder="Chọn thời gian" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Hôm nay</SelectItem>
-            <SelectItem value="week">7 ngày qua</SelectItem>
-            <SelectItem value="month">30 ngày qua</SelectItem>
-            <SelectItem value="year">Năm nay</SelectItem>
-            <SelectItem value="all">Tất cả thời gian</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-500">Thời gian</label>
+            <Select value={timeframe} onValueChange={setTimeframe}>
+              <SelectTrigger className="w-[160px] bg-white">
+                <SelectValue placeholder="Chọn thời gian" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Hôm nay</SelectItem>
+                <SelectItem value="week">7 ngày qua</SelectItem>
+                <SelectItem value="month">30 ngày qua</SelectItem>
+                <SelectItem value="year">Năm nay</SelectItem>
+                <SelectItem value="all">Tất cả thời gian</SelectItem>
+                <SelectItem value="custom">Tùy chỉnh</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {timeframe === "custom" && (
+            <>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-500">Từ ngày</label>
+                <Input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={e => setStartDate(e.target.value)} 
+                  className="bg-white h-10 w-[140px]" 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-500">Đến ngày</label>
+                <Input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={e => setEndDate(e.target.value)} 
+                  className="bg-white h-10 w-[140px]" 
+                />
+              </div>
+            </>
+          )}
+
+          <Button onClick={handlePrint} className="h-10 bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors ml-auto sm:ml-0">
+            <Printer className="mr-2 h-4 w-4" />
+            In Báo Cáo
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -149,18 +198,17 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Main Charts Area */}
-      <div className="grid gap-6 lg:grid-cols-7">
+      <div className="grid gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {/* Doanh thu theo tháng */}
-        <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">Biểu đồ doanh thu năm hiện tại (Current Year)</h3>
-          <div className="flex h-64 items-end justify-between gap-2 px-4">
+        <div className="col-span-1 xl:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-800">Biểu đồ doanh thu năm hiện tại</h3>
+          <div className="flex h-[280px] items-end justify-between gap-2 px-4">
             {monthlyRev.map((val, idx) => {
               const height = (val / maxRev) * 100
               const labelM = (val / 1_000_000).toFixed(1)
               return (
                 <div key={idx} className="group relative flex h-full flex-1 flex-col items-center justify-end gap-1">
-                  <div className="absolute -top-6 hidden whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-[10px] text-white shadow-lg group-hover:block">
+                  <div className="absolute -top-6 hidden whitespace-nowrap rounded bg-slate-800 px-2 py-1 text-[10px] text-white shadow-lg z-10 group-hover:block">
                     {labelM}M
                   </div>
                   <div
@@ -172,74 +220,106 @@ export default function AdminDashboardPage() {
               )
             })}
           </div>
-          <p className="mt-3 text-center text-xs text-slate-400">Đơn vị: triệu VNĐ (Năm {new Date().getFullYear()})</p>
         </div>
 
-        {/* Top Medicines */}
-        <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">Top Thuốc Xuất Kho</h3>
+        {/* Top Thuốc (Pie Chart) */}
+        <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-800">Tỷ trọng Thuốc Xuất Kho</h3>
           {stats.topMedicines?.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center text-slate-400">
+            <div className="flex h-[280px] flex-col items-center justify-center text-slate-400">
               <Package className="mb-2 h-8 w-8 opacity-20" />
               <p className="text-sm">Chưa có dữ liệu</p>
             </div>
           ) : (
-            <div className="space-y-4 pt-2">
-              {stats.topMedicines?.map((med, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-medical-primary/10 text-xs font-bold text-medical-primary">
-                      #{idx + 1}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">{med.name}</p>
-                      <p className="text-xs text-slate-500">Đơn vị: {med.unit}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-medical-primary">{med.quantity}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.topMedicines}
+                    cx="50%"
+                    cy="45%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="quantity"
+                    nameKey="name"
+                  >
+                    {stats.topMedicines.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip formatter={(value: any) => [value, "Số lượng"]} />
+                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}/>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>
 
-        {/* Audit Log Timeline */}
-        <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-          <h3 className="mb-4 text-lg font-semibold text-slate-800">Dòng thời gian hoạt động</h3>
-          {auditQuery.isPending ? (
-            <div className="flex h-64 items-center justify-center">
-              <span className="text-sm text-slate-400">Đang tải...</span>
-            </div>
-          ) : auditLog.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center text-slate-400">
-              <Activity className="mb-2 h-8 w-8 opacity-20" />
-              <p className="text-sm">Chưa có hoạt động nào</p>
+        {/* Top Doctors */}
+        <div className="col-span-1 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-lg font-semibold text-slate-800">Top Bác Sĩ (Số ca khám)</h3>
+          {(!stats.topDoctors || stats.topDoctors.length === 0) ? (
+            <div className="flex h-[280px] flex-col items-center justify-center text-slate-400">
+              <Stethoscope className="mb-2 h-8 w-8 opacity-20" />
+              <p className="text-sm">Chưa có dữ liệu</p>
             </div>
           ) : (
-            <div className="relative max-h-72 space-y-0 overflow-y-auto pl-2 pr-2">
-              <div className="absolute bottom-0 left-[13px] top-2 w-[2px] bg-slate-100" />
-              {auditLog.map((entry) => (
-                <div key={entry.id} className="relative pb-5 pl-6 last:pb-0">
-                  <div className="absolute left-[3px] top-1.5 h-2.5 w-2.5 rounded-full border-[2px] border-white bg-medical-primary shadow-sm" />
-                  <div className="flex flex-col">
-                    <p className="text-sm text-slate-700">
-                      <span className="font-semibold text-slate-900">{formatActor(entry.actor)}</span>
-                      {" "}
-                      <span className="text-slate-500">{ACTION_LABELS[entry.action] ?? entry.action}</span>
-                      {" "}
-                      <span className="font-medium text-medical-primary">{formatTarget(entry.target)}</span>
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-slate-400">
-                      {formatTimestamp(entry.timestamp)}
-                    </p>
+            <div className="space-y-4 pt-2">
+              {stats.topDoctors.map((doc, idx) => (
+                <div key={idx} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-bold text-emerald-600">
+                      #{idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">Bs. {doc.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-emerald-600">{doc.appointments} ca</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+      </div>
+      
+      {/* Audit Log Timeline */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-lg font-semibold text-slate-800">Dòng thời gian hoạt động hệ thống</h3>
+        {auditQuery.isPending ? (
+          <div className="flex h-40 items-center justify-center">
+            <span className="text-sm text-slate-400">Đang tải...</span>
+          </div>
+        ) : auditLog.length === 0 ? (
+          <div className="flex h-40 flex-col items-center justify-center text-slate-400">
+            <Activity className="mb-2 h-8 w-8 opacity-20" />
+            <p className="text-sm">Chưa có hoạt động nào</p>
+          </div>
+        ) : (
+          <div className="relative max-h-80 space-y-0 overflow-y-auto pl-2 pr-2">
+            <div className="absolute bottom-0 left-[13px] top-2 w-[2px] bg-slate-100" />
+            {auditLog.map((entry) => (
+              <div key={entry.id} className="relative pb-5 pl-6 last:pb-0">
+                <div className="absolute left-[3px] top-1.5 h-2.5 w-2.5 rounded-full border-[2px] border-white bg-medical-primary shadow-sm" />
+                <div className="flex flex-col">
+                  <p className="text-sm text-slate-700">
+                    <span className="font-semibold text-slate-900">{formatActor(entry.actor)}</span>
+                    {" "}
+                    <span className="text-slate-500">{ACTION_LABELS[entry.action] ?? entry.action}</span>
+                    {" "}
+                    <span className="font-medium text-medical-primary">{formatTarget(entry.target)}</span>
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-medium text-slate-400">
+                    {formatTimestamp(entry.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

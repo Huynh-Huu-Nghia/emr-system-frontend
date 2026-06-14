@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown } from "lucide-react"
+import { CheckCircle2, Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown, Printer } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -283,6 +283,16 @@ export default function ReceptionPaymentsPage() {
               </div>
 
               <MasterModalFooter>
+                {viewTarget.status === "PAID" && (
+                  <Button
+                    variant="default"
+                    onClick={() => window.open(`/print/invoice/${viewTarget.id}`, '_blank')}
+                    className="mr-auto gap-2"
+                  >
+                    <Printer className="h-4 w-4" />
+                    In Hóa Đơn
+                  </Button>
+                )}
                 <MasterModalAction variant="secondary" onClick={() => setViewTarget(null)}>
                   Đóng
                 </MasterModalAction>
