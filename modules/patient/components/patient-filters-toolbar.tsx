@@ -12,8 +12,9 @@ import {
 import type {
   PatientGenderFilter,
   PatientInsuranceFilter,
+  PatientSortOption,
 } from "@/modules/patient/types"
-import { Search } from "lucide-react"
+import { Search, ArrowUpDown } from "lucide-react"
 
 type PatientFiltersToolbarProps = {
   searchQuery: string
@@ -22,6 +23,8 @@ type PatientFiltersToolbarProps = {
   onGenderChange: (value: PatientGenderFilter) => void
   insuranceFilter: PatientInsuranceFilter
   onInsuranceChange: (value: PatientInsuranceFilter) => void
+  sortBy: PatientSortOption
+  onSortChange: (value: PatientSortOption) => void
   onClearFilters: () => void
 }
 
@@ -32,11 +35,13 @@ export function PatientFiltersToolbar({
   onGenderChange,
   insuranceFilter,
   onInsuranceChange,
+  sortBy,
+  onSortChange,
   onClearFilters,
 }: PatientFiltersToolbarProps) {
   return (
     <div className="border-b border-slate-200 px-6 py-4">
-      <div className="grid items-end gap-4 lg:grid-cols-[1.5fr_1fr_1fr_120px]">
+      <div className="grid items-end gap-4 lg:grid-cols-[1.5fr_1fr_1fr_1fr_120px]">
         <div>
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
             Tìm kiếm nhanh
@@ -84,6 +89,28 @@ export function PatientFiltersToolbar({
               <SelectItem value="ALL">Tất cả</SelectItem>
               <SelectItem value="HAS">Có BHYT</SelectItem>
               <SelectItem value="NONE">Không BHYT</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+            Sắp xếp
+          </label>
+          <Select
+            value={sortBy}
+            onValueChange={(value) => onSortChange(value as PatientSortOption)}
+          >
+            <SelectTrigger className="w-full" size="sm">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+                <SelectValue placeholder="Sắp xếp" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NEWEST">Mới nhất</SelectItem>
+              <SelectItem value="OLDEST">Cũ nhất</SelectItem>
+              <SelectItem value="NAME_ASC">Tên (A-Z)</SelectItem>
+              <SelectItem value="NAME_DESC">Tên (Z-A)</SelectItem>
             </SelectContent>
           </Select>
         </div>

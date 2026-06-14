@@ -24,9 +24,13 @@ type PatientsTableProps = {
   filteredPatients: Patient[]
   deletePending: boolean
   canDelete?: boolean
-  onEdit: (patient: Patient) => void
+  onEdit?: (patient: Patient) => void
   onView: (patient: Patient) => void
   onDeleteRequest: (patient: Patient) => void
+  enableSelection?: boolean
+  selectedIds?: Set<number>
+  onToggleSelection?: (id: number) => void
+  onToggleAll?: (selectAll: boolean) => void
 }
 
 export function PatientsTable({
@@ -41,12 +45,33 @@ export function PatientsTable({
   onEdit,
   onView,
   onDeleteRequest,
+  enableSelection = false,
+  selectedIds = new Set(),
+  onToggleSelection,
+  onToggleAll,
 }: PatientsTableProps) {
+  const allIds = filteredPatients.map((p) => p.id)
+  const isAllSelected = allIds.length > 0 && allIds.every((id) => selectedIds.has(id))
+  const isSomeSelected = allIds.some((id) => selectedIds.has(id))
+
   return (
     <MasterTable showHeader={false}>
       <MasterTableHeader>
         <TableRow className="border-none hover:bg-transparent">
-          <TableHead className="w-[130px] pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
+          {enableSelection && (
+            <TableHead className="w-[50px] pl-8">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = isSomeSelected && !isAllSelected
+                }}
+                onChange={(e) => onToggleAll?.(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-medical-primary focus:ring-medical-primary"
+              />
+            </TableHead>
+          )}
+          <TableHead className={enableSelection ? "w-[130px] pl-4 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70" : "w-[130px] pl-8 text-[10px] font-bold uppercase tracking-widest text-medical-dark/70"}>
             Mã hồ sơ
           </TableHead>
           <TableHead className="w-[220px] text-[10px] font-bold uppercase tracking-widest text-medical-dark/70">
@@ -72,13 +97,13 @@ export function PatientsTable({
       <MasterTableBody>
         {isPending ? (
           <TableRow>
-            <TableCell colSpan={7} className="p-0">
+            <TableCell colSpan={enableSelection ? 8 : 7} className="p-0">
               <LoadingBlock message="Đang tải danh sách…" />
             </TableCell>
           </TableRow>
         ) : isError ? (
           <TableRow>
-            <TableCell colSpan={7} className="p-0">
+            <TableCell colSpan={enableSelection ? 8 : 7} className="p-0">
               <ErrorState
                 description={errorMessage}
                 onRetry={() => void onRetry()}
@@ -87,7 +112,7 @@ export function PatientsTable({
           </TableRow>
         ) : patients.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="p-0">
+            <TableCell colSpan={enableSelection ? 8 : 7} className="p-0">
               <EmptyState
                 title="Chưa có bệnh nhân nào"
                 description="Bắt đầu bằng cách tiếp nhận hồ sơ mới."
@@ -96,7 +121,7 @@ export function PatientsTable({
           </TableRow>
         ) : filteredPatients.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="p-0">
+            <TableCell colSpan={enableSelection ? 8 : 7} className="p-0">
               <EmptyState title="Không có bệnh nhân phù hợp" />
             </TableCell>
           </TableRow>
@@ -104,9 +129,19 @@ export function PatientsTable({
           filteredPatients.map((p) => (
             <TableRow
               key={p.id}
-              className="group transition-colors hover:bg-slate-50"
+              className={`group transition-colors ${selectedIds.has(p.id) ? "bg-medical-primary/5 hover:bg-medical-primary/10" : "hover:bg-slate-50"}`}
             >
-              <TableCell className="pl-8 font-medium text-medical-primary">
+              {enableSelection && (
+                <TableCell className="pl-8">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(p.id)}
+                    onChange={() => onToggleSelection?.(p.id)}
+                    className="h-4 w-4 rounded border-slate-300 text-medical-primary focus:ring-medical-primary"
+                  />
+                </TableCell>
+              )}
+              <TableCell className={enableSelection ? "pl-4 font-medium text-medical-primary" : "pl-8 font-medium text-medical-primary"}>
                 #{p.medicalHistoryNumber}
               </TableCell>
               <TableCell>
@@ -140,15 +175,17 @@ export function PatientsTable({
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={deletePending}
-                    onClick={() => onEdit(p)}
-                    className="rounded-full shadow-none transition-all hover:bg-medical-primary hover:text-white"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={deletePending}
+                      onClick={() => onEdit(p)}
+                      className="rounded-full shadow-none transition-all hover:bg-medical-primary hover:text-white"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
                   {canDelete ? (
                     <Button
                       variant="destructive"

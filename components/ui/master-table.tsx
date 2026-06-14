@@ -46,8 +46,8 @@ const MasterTable = React.forwardRef<HTMLTableElement, MasterTableProps>(
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border border-slate-200">
-          <Table ref={ref} className={cn(className)}>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <Table ref={ref} className={cn("relative", className)} containerClassName="max-h-[60vh]">
             {children}
           </Table>
         </div>
@@ -96,7 +96,7 @@ const MasterTableHeader = React.forwardRef<
   <TableHeader
     ref={ref}
     className={cn(
-      "bg-medical-light [&_tr]:border-b-2 [&_tr]:border-medical-primary [&_th]:text-medical-dark [&_th]:font-semibold",
+      "sticky top-0 z-10 bg-medical-light [&_tr]:border-b-2 [&_tr]:border-medical-primary [&_th]:text-medical-dark [&_th]:font-semibold shadow-sm",
       className
     )}
     {...props}

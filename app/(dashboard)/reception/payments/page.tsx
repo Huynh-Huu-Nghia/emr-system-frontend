@@ -45,7 +45,7 @@ export default function ReceptionPaymentsPage() {
 
   const [viewTarget, setViewTarget] = useState<PaymentRecord | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<PaymentRecord | null>(null)
-  const [filter, setFilter] = useState<"ALL" | "UNPAID" | "PAID">("ALL")
+  const [filter, setFilter] = useState<"ALL" | "UNPAID" | "PAID" | "CANCELLED">("ALL")
   const [search, setSearch] = useState("")
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -110,7 +110,7 @@ export default function ReceptionPaymentsPage() {
             className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
           />
         </div>
-        <Select value={filter} onValueChange={(v: "ALL" | "UNPAID" | "PAID") => setFilter(v)}>
+        <Select value={filter} onValueChange={(v: "ALL" | "UNPAID" | "PAID" | "CANCELLED") => setFilter(v)}>
           <SelectTrigger className="w-[180px] rounded-xl border-slate-200 bg-white shadow-sm">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
@@ -118,6 +118,7 @@ export default function ReceptionPaymentsPage() {
             <SelectItem value="ALL">Tất cả</SelectItem>
             <SelectItem value="UNPAID">Chờ thanh toán</SelectItem>
             <SelectItem value="PAID">Đã thanh toán</SelectItem>
+            <SelectItem value="CANCELLED">Đã hủy</SelectItem>
           </SelectContent>
         </Select>
         <Button
@@ -188,6 +189,10 @@ export default function ReceptionPaymentsPage() {
                       <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                         Đã thanh toán
                       </span>
+                    ) : payment.status === "CANCELLED" ? (
+                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
+                        Đã hủy
+                      </span>
                     ) : (
                       <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
                         Chờ thanh toán
@@ -242,7 +247,7 @@ export default function ReceptionPaymentsPage() {
                 />
                 <InvoiceMeta
                   label="Trạng thái"
-                  value={viewTarget.status === "PAID" ? "Đã thanh toán" : "Chờ thanh toán"}
+                  value={paymentStatusLabel(viewTarget.status)}
                 />
               </div>
 
@@ -319,4 +324,10 @@ function InvoiceMeta({ label, value }: { label: string; value: string }) {
       <p className="font-medium">{value}</p>
     </div>
   )
+}
+
+function paymentStatusLabel(status: string) {
+  if (status === "PAID") return "Đã thanh toán"
+  if (status === "CANCELLED") return "Đã hủy"
+  return "Chờ thanh toán"
 }

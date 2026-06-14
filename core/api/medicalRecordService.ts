@@ -51,7 +51,10 @@ export const medicalRecordService = {
 
   async getByAppointmentId(appointmentId: number): Promise<MedicalRecord | null> {
     const res = await apiFetch(`/api/patients/medical-records?appointmentId=${appointmentId}`)
-    if (!res.ok) throw new Error("Failed to fetch medical record")
+    if (!res.ok) {
+      if (res.status === 404) return null
+      throw new Error("Failed to fetch medical record")
+    }
     const data = await res.json()
     if (!data) return null
     if (Array.isArray(data)) {
@@ -63,7 +66,10 @@ export const medicalRecordService = {
 
   async getByPatientId(patientId: number): Promise<MedicalRecord[]> {
     const res = await apiFetch(`/api/patients/medical-records?patientId=${patientId}`)
-    if (!res.ok) throw new Error("Failed to fetch medical records for patient")
+    if (!res.ok) {
+      if (res.status === 404) return []
+      throw new Error("Failed to fetch medical records for patient")
+    }
     const data = await res.json()
     if (!Array.isArray(data)) return []
     return data.map(mapMedicalRecord)
@@ -75,7 +81,11 @@ export const medicalRecordService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error("Failed to create medical record")
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "")
+      console.error("Backend error text:", errorText)
+      throw new Error("Failed to create medical record: " + errorText)
+    }
     return res.json()
   },
 

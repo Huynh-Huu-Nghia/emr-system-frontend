@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner"
 import { Save, ArrowRight, ArrowLeft, History, FileText, CheckCircle } from "lucide-react"
 import { medicalRecordService, type MedicalRecord } from "@/core/api/medicalRecordService"
+import { prescriptionService } from "@/core/api/prescriptionService"
 import { queueService } from "@/core/api/queueService"
 import { doctorService } from "@/core/api/doctorService"
 import { authService } from "@/core/api/authService"
@@ -337,10 +338,21 @@ export default function DoctorExaminationPage() {
       if (action === "PRESCRIPTION") {
         setStep("prescription")
       } else {
+        // Create an empty prescription to trigger payment flow with 0 VND
+        try {
+          await prescriptionService.create({
+            medicalRecordId: result.id,
+            notes: "Không kê đơn thuốc",
+            totalPrice: 0,
+          })
+        } catch (err) {
+          console.error("Failed to create empty prescription", err)
+        }
         // Complete exam immediately
         await handleFinish()
       }
-    } catch {
+    } catch (error) {
+      console.error("DEBUG_SAVE_RECORD_ERROR:", error)
       toast.error("Không thể lưu bệnh án")
     } finally {
       setSaving(false)

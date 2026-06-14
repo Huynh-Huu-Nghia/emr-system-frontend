@@ -33,6 +33,7 @@ export const ROUTES = {
 
   ADMIN: {
     DASHBOARD: "/admin",
+    PATIENTS: "/admin/patients",
     STAFF: "/admin/staff",
     DOCTORS: "/admin/doctors",
     MEDICINES: "/admin/medicines",

@@ -12,3 +12,4 @@ export type { PatientFormValues } from "@/modules/patient/schemas/patient-form-s
 
 export type PatientGenderFilter = "ALL" | "MALE" | "FEMALE" | "OTHER"
 export type PatientInsuranceFilter = "ALL" | "HAS" | "NONE"
+export type PatientSortOption = "NEWEST" | "OLDEST" | "NAME_ASC" | "NAME_DESC"

@@ -10,11 +10,12 @@ export function filterPatients(
     searchQuery: string
     genderFilter: PatientGenderFilter
     insuranceFilter: PatientInsuranceFilter
+    sortBy?: PatientSortOption
   }
 ): Patient[] {
   const query = opts.searchQuery.trim().toLowerCase()
 
-  return patients.filter((patient) => {
+  const filtered = patients.filter((patient) => {
     const matchesSearch =
       !query ||
       patient.full_name.toLowerCase().includes(query) ||
@@ -31,5 +32,20 @@ export function filterPatients(
       (opts.insuranceFilter === "NONE" && !patient.insurance_code)
 
     return matchesSearch && matchesGender && matchesInsurance
+  })
+
+  return filtered.sort((a, b) => {
+    switch (opts.sortBy) {
+      case "NEWEST":
+        return b.id - a.id
+      case "OLDEST":
+        return a.id - b.id
+      case "NAME_ASC":
+        return a.full_name.localeCompare(b.full_name, "vi")
+      case "NAME_DESC":
+        return b.full_name.localeCompare(a.full_name, "vi")
+      default:
+        return b.id - a.id // Default to newest
+    }
   })
 }

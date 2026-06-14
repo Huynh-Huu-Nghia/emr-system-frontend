@@ -33,6 +33,10 @@ const ACTION_LABELS: Record<string, string> = {
   COMPLETE_QUEUE: "Hoàn thành khám hàng đợi",
   CREATE_PRESCRIPTION: "Kê đơn thuốc",
   START_EXAM: "Bắt đầu khám",
+  CREATE_MEDICAL_RECORD: "Tạo hồ sơ bệnh án",
+  ENQUEUE_PATIENT: "Xếp vào hàng đợi",
+  CANCEL_PAYMENT: "Hủy thanh toán",
+  SEND_EMAIL: "Gửi email",
 }
 
 const formatActor = (actor: string) => {

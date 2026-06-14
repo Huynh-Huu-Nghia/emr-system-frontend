@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { Plus, Eye, Phone, MapPin, Calendar as CalendarIcon, User as UserIcon, Stethoscope, DoorOpen } from "lucide-react"
 
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  MasterModal,
+  MasterModalContent,
+  MasterModalHeader,
+  MasterModalFooter,
+  MasterModalAction,
+} from "@/components/ui/master-modal"
 import { ROUTES } from "@/constants/routes"
 import { usePatientsQuery } from "@/modules/patient/hooks/use-patients-query"
 import { useAppointmentsQuery } from "@/modules/appointment/hooks/use-appointments-query"
@@ -72,6 +79,9 @@ export default function ReceptionCheckinPage() {
   const [walkinDoctorId, setWalkinDoctorId] = useState<string>("")
   const [walkinReason, setWalkinReason] = useState<string>("")
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false)
+
+  // Queue View state
+  const [viewingQueueItem, setViewingQueueItem] = useState<any | null>(null)
 
   const [loading, setLoading] = useState(false)
 
@@ -384,6 +394,15 @@ export default function ReceptionCheckinPage() {
                     `}>
                       {queueStatusLabel(q.status)}
                     </span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 ml-1 rounded-full bg-slate-100 hover:bg-slate-200" 
+                      onClick={() => setViewingQueueItem(q)}
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-slate-600" />
+                    </Button>
                   </div>
                 </li>
               ))}
@@ -397,6 +416,80 @@ export default function ReceptionCheckinPage() {
         onClose={() => setIsPatientModalOpen(false)}
         onCreated={(newPatient) => setWalkinPatientId(String(newPatient.id))}
       />
+
+      <MasterModal open={viewingQueueItem != null} onOpenChange={(open) => { if (!open) setViewingQueueItem(null) }}>
+        <MasterModalContent className="sm:max-w-md">
+          <MasterModalHeader title="Thông tin gọi khám" />
+          {viewingQueueItem && (() => {
+            const vp = patients.find(p => p.id === viewingQueueItem.patientId)
+            const vd = doctors.find(d => d.id === viewingQueueItem.doctorId)
+            return (
+              <div className="px-6 py-5 space-y-6">
+                {/* Thông tin bệnh nhân */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                    <UserIcon className="h-3.5 w-3.5" /> Bệnh nhân
+                  </h3>
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-3">
+                    <div>
+                      <div className="text-lg font-bold text-slate-800">{viewingQueueItem.patientName}</div>
+                      <div className="text-sm font-medium text-medical-primary">Hồ sơ: #{viewingQueueItem.medicalHistoryNumber}</div>
+                    </div>
+                    {vp ? (
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <CalendarIcon className="h-4 w-4 text-slate-400" />
+                          <span>{vp.dob ? formatDateVi(vp.dob) : "Chưa rõ"} ({vp.gender === 'MALE' ? 'Nam' : vp.gender === 'FEMALE' ? 'Nữ' : 'Khác'})</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Phone className="h-4 w-4 text-slate-400" />
+                          <span>{vp.phone || "Không có SĐT"}</span>
+                        </div>
+                        {vp.address && (
+                          <div className="col-span-2 flex items-start gap-2 text-slate-600">
+                            <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">{vp.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 italic">Không tìm thấy thông tin chi tiết</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Thông tin bác sĩ/phòng khám */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                    <Stethoscope className="h-3.5 w-3.5" /> Phân luồng
+                  </h3>
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="text-sm font-medium text-slate-500">Bác sĩ phụ trách</div>
+                        <div className="text-base font-bold text-emerald-800">{viewingQueueItem.doctorName}</div>
+                        <div className="text-sm text-emerald-600 mt-0.5">{vd?.specialty || "Đa khoa"}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-slate-500">Phòng khám</div>
+                        <div className="flex items-center justify-end gap-1.5 mt-1 text-emerald-700 font-bold">
+                          <DoorOpen className="h-5 w-5" />
+                          <span className="text-lg">{vd?.roomNumber || "Chưa xếp phòng"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+          <MasterModalFooter>
+            <MasterModalAction variant="primary" onClick={() => setViewingQueueItem(null)}>
+              Đóng
+            </MasterModalAction>
+          </MasterModalFooter>
+        </MasterModalContent>
+      </MasterModal>
     </div>
   )
 }

@@ -66,6 +66,17 @@ export const appointmentService = {
     return { success: true, data: rawData.map(mapAppointment), total: rawData.length }
   },
 
+  async getByPatientId(patientId: number): Promise<Appointment[]> {
+    const res = await apiFetch(`/api/appointments?patientId=${patientId}`)
+    if (!res.ok) {
+      if (res.status === 404) return []
+      throw new Error("Failed to fetch appointments for patient")
+    }
+    const rawData = (await res.json()) as Record<string, unknown>[]
+    if (!Array.isArray(rawData)) return []
+    return rawData.map(mapAppointment)
+  },
+
   async create(body: AppointmentCreateRequest): Promise<Appointment> {
     const startTs = toTimestampString(body.starts_at)
     const res = await apiFetch("/api/appointments", {
