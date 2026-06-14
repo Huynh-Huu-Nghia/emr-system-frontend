@@ -102,10 +102,18 @@ export function UsersTab() {
     return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[role]}`}>{labels[role]}</span>
   }
 
-  const statusBadge = (status: UserRecord["status"]) =>
-    status === "ACTIVE"
-      ? <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Hoạt động</span>
-      : <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">Đã khóa</span>
+  const statusBadge = (status: UserRecord["status"]) => {
+  switch (status) {
+    case "ACTIVE":
+      return <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Hoạt động</span>;
+    case "INACTIVE":
+      return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">Ngưng hoạt động</span>;
+    case "BLOCKED":
+      return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">Bị khóa</span>;
+    default:
+      return null;
+  }
+};
 
   if (isPending) return <LoadingBlock />
   if (isError) return <ErrorState description="Không thể tải danh sách người dùng" onRetry={() => void refetch()} />

@@ -90,11 +90,24 @@ export function ReceptionistsTab() {
   }
 
   const toggleStatus = (recp: ReceptionistRecord) => {
-    const newStatus = recp.status === "ACTIVE" ? "LOCKED" : "ACTIVE"
+    const newStatus = recp.status === "BLOCKED" ? "ACTIVE" : "BLOCKED"
     updateMutation.mutate({
       id: recp.id,
       data: { status: newStatus },
     })
+  }
+
+  const statusBadge = (status: ReceptionistRecord["status"]) => {
+    switch (status) {
+      case "ACTIVE":
+        return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Hoạt động</span>
+      case "INACTIVE":
+        return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">Ngưng hoạt động</span>
+      case "BLOCKED":
+        return <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">Bị khóa</span>
+      default:
+        return null
+    }
   }
 
   if (isPending) return <LoadingBlock />
@@ -197,19 +210,13 @@ export function ReceptionistsTab() {
                   <TableCell className="text-sm text-slate-600">{recp.phone}</TableCell>
                   <TableCell className="text-sm text-slate-600">{recp.email}</TableCell>
                   <TableCell className="text-sm text-slate-600">{recp.department}</TableCell>
-                  <TableCell>
-                    {recp.status === "ACTIVE" ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Hoạt động</span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">Đã khóa</span>
-                    )}
-                  </TableCell>
+                  <TableCell>{statusBadge(recp.status)}</TableCell>
                   <TableCell className="pr-8 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => toggleStatus(recp)}
-                        title={recp.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                        title={recp.status === "BLOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
                         className="rounded-full shadow-none transition-all hover:bg-slate-100">
-                        {recp.status === "ACTIVE" ? <Lock className="h-4 w-4 text-amber-600" /> : <Unlock className="h-4 w-4 text-emerald-600" />}
+                        {recp.status === "BLOCKED" ? <Unlock className="h-4 w-4 text-emerald-600" /> : <Lock className="h-4 w-4 text-amber-600" />}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(recp)}
                         className="rounded-full shadow-none transition-all hover:bg-slate-100">

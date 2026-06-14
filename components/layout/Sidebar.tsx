@@ -8,13 +8,27 @@ import { cn } from "@/lib/utils"
 export function Sidebar() {
   const pathname = usePathname() ?? ""
 
-  const role = pathname.startsWith("/doctor")
+  type Role = "reception" | "doctor" | "admin"
+
+  const deriveRole = (path: string): Role =>
+  path.startsWith("/doctor")
     ? "doctor"
-    : pathname.startsWith("/admin")
+    : path.startsWith("/admin")
     ? "admin"
     : "reception"
 
-  // ✅ Lấy menu theo role từ constants, không if/else rối
+  const [role, setRole] = useState<Role>(() => deriveRole(pathname))
+
+  useEffect(() => {
+    if (
+      pathname.startsWith("/doctor") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/reception")
+    ) {
+      setRole(deriveRole(pathname))
+    }
+  }, [pathname])
+
   const menuItems = SIDEBAR_MENU[role]
 
   const [collapsed, setCollapsed] = useState(false)

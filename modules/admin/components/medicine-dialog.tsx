@@ -68,7 +68,7 @@ export function MedicineDialog({ open, onOpenChange, initialData }: MedicineDial
           unit: initialData.unit,
           price: String(initialData.price),
           stockQuantity: String(initialData.stockQuantity),
-          expiryDate: initialData.expiryDate,
+          expiryDate: initialData.expiryDate ? initialData.expiryDate.slice(0, 10) : "",
           categoryId: initialData.categoryId ? String(initialData.categoryId) : "0",
         })
       } else {

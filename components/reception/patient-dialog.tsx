@@ -38,8 +38,8 @@ interface PatientDialogProps {
   isOpen: boolean
   onClose: () => void
   initialData?: Patient | null
-  /** Optional hook after mutations succeed (e.g. extra analytics). Cache is invalidated in mutations. */
   onSuccess?: () => void
+  onCreated?: (patient: Patient) => void
 }
 
 export function PatientDialog({
@@ -47,6 +47,7 @@ export function PatientDialog({
   onClose,
   initialData,
   onSuccess,
+  onCreated,
 }: PatientDialogProps) {
   const createMutation = useCreatePatientMutation()
   const updateMutation = useUpdatePatientMutation()
@@ -103,16 +104,16 @@ export function PatientDialog({
       if (initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data: values })
       } else {
-        await createMutation.mutateAsync({
+        const created = await createMutation.mutateAsync({
           ...values,
           username: values.create_account ? values.username?.trim() : "",
           password: values.create_account ? values.password : "",
         })
+        onCreated?.(created)
       }
       onSuccess?.()
       onClose()
     } catch {
-      /* toast handled in mutation onError */
     }
   }
 

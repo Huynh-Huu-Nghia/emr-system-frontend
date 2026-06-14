@@ -30,6 +30,9 @@ export default function LoginPage() {
   // Forgot Password State
   const [showForgotModal, setShowForgotModal] = useState(false)
 
+  // Help State
+  const [showHelpModal, setShowHelpModal] = useState(false)
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -146,6 +149,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              onClick={() => setShowHelpModal(true)}
               className="transition hover:text-medical-dark"
             >
               Trợ giúp
@@ -168,6 +172,27 @@ export default function LoginPage() {
               type="button"
               className="bg-medical-primary hover:bg-medical-dark text-white"
               onClick={() => setShowForgotModal(false)}
+            >
+              Đã hiểu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Dialog */}
+      <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Trợ giúp</DialogTitle>
+            <DialogDescription className="pt-4 text-base text-slate-700">
+              Nếu bạn cần trợ giúp, vui lòng liên hệ với <strong>Quản trị viên (Admin)</strong> hoặc <strong>bộ phận IT</strong> của phòng khám.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button
+              type="button"
+              className="bg-medical-primary hover:bg-medical-dark text-white"
+              onClick={() => setShowHelpModal(false)}
             >
               Đã hiểu
             </Button>

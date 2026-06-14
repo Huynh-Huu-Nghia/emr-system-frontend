@@ -395,6 +395,7 @@ export default function ReceptionCheckinPage() {
       <PatientDialog
         isOpen={isPatientModalOpen}
         onClose={() => setIsPatientModalOpen(false)}
+        onCreated={(newPatient) => setWalkinPatientId(String(newPatient.id))}
       />
     </div>
   )

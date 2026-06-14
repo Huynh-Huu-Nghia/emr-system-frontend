@@ -89,11 +89,24 @@ export function DoctorsTab() {
   }
 
   const toggleStatus = (doc: DoctorRecord) => {
-    const newStatus = doc.status === "ACTIVE" ? "LOCKED" : "ACTIVE"
+    const newStatus = doc.status === "BLOCKED" ? "ACTIVE" : "BLOCKED"
     updateMutation.mutate({
       id: doc.id,
       data: { status: newStatus },
     })
+  }
+
+  const statusBadge = (status: DoctorRecord["status"]) => {
+    switch (status) {
+      case "ACTIVE":
+        return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Hoạt động</span>
+      case "INACTIVE":
+        return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">Ngưng hoạt động</span>
+      case "BLOCKED":
+        return <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">Bị khóa</span>
+      default:
+        return null
+    }
   }
 
   if (isPending) return <LoadingBlock />
@@ -202,19 +215,13 @@ export function DoctorsTab() {
                   <TableCell className="font-mono text-sm text-slate-600">{doc.roomNumber}</TableCell>
                   <TableCell className="text-sm text-slate-600">{doc.phone}</TableCell>
                   <TableCell className="text-sm text-slate-600">{doc.email}</TableCell>
-                  <TableCell>
-                    {doc.status === "ACTIVE" ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">Hoạt động</span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700">Đã khóa</span>
-                    )}
-                  </TableCell>
+                  <TableCell>{statusBadge(doc.status)}</TableCell>
                   <TableCell className="pr-8 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => toggleStatus(doc)}
-                        title={doc.status === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                        title={doc.status === "BLOCKED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
                         className="rounded-full shadow-none transition-all hover:bg-slate-100">
-                        {doc.status === "ACTIVE" ? <Lock className="h-4 w-4 text-amber-600" /> : <Unlock className="h-4 w-4 text-emerald-600" />}
+                        {doc.status === "BLOCKED" ? <Unlock className="h-4 w-4 text-emerald-600" /> : <Lock className="h-4 w-4 text-amber-600" />}
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(doc)}
                         className="rounded-full shadow-none transition-all hover:bg-slate-100">

@@ -108,12 +108,12 @@ export const appointmentService = {
         appointmentStartDate: startTs,
         appointmentEndDate: startTs,
         reason: reason ?? "",
-        status: "PENDING",
       }),
     })
     if (!res.ok) throw new Error("Failed to reschedule")
-    return { id, doctor_id: 0, patient_id: 0, patient_name: "", doctor_name: "", medical_history_number: "", queue_id: null, queue_position: null, starts_at, reason: reason ?? null, status: "PENDING", created_at: "", appointmentCode: `LH${String(id).padStart(3, "0")}` }
-  },
+    const result = await res.json()
+    return mapAppointment(result)
+},
 
   async cancel(id: number): Promise<Appointment> {
     const res = await apiFetch(`/api/appointments/${id}`, {
