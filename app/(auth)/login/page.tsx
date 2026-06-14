@@ -8,6 +8,14 @@ import type { LoginRequest } from "@/core/api/authService"
 import { Button } from "@/components/ui/button"
 import { getPostLoginPathForRole } from "@/constants/routes"
 import { useAuth } from "@/context/AuthContext"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,6 +26,9 @@ export default function LoginPage() {
     username: "",
     password: "",
   })
+
+  // Forgot Password State
+  const [showForgotModal, setShowForgotModal] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -128,6 +139,7 @@ export default function LoginPage() {
           <div className="mt-6 flex justify-end gap-6 text-sm text-medical-primary">
             <button
               type="button"
+              onClick={() => setShowForgotModal(true)}
               className="transition hover:text-medical-dark"
             >
               Quên mật khẩu?
@@ -141,6 +153,27 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotModal} onOpenChange={setShowForgotModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Quên mật khẩu</DialogTitle>
+            <DialogDescription className="pt-4 text-base text-slate-700">
+              Đây là hệ thống quản lý nội bộ. Để bảo mật thông tin, nếu bạn quên mật khẩu, vui lòng liên hệ trực tiếp với <strong>Quản trị viên (Admin)</strong> hoặc <strong>bộ phận IT</strong> của phòng khám để được cấp lại mật khẩu mới.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button
+              type="button"
+              className="bg-medical-primary hover:bg-medical-dark text-white"
+              onClick={() => setShowForgotModal(false)}
+            >
+              Đã hiểu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }
