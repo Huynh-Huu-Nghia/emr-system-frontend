@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { PageHeader } from "@/components/ui/page-header"
-import { Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown, Download, XCircle } from "lucide-react"
+import { Eye, Receipt, RefreshCw, Search, ArrowUp, ArrowDown, Printer, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -79,16 +79,14 @@ export default function AdminPaymentsPage() {
       
       if (dateFrom) {
         const pDate = new Date(p.createdAt).getTime()
-        const fDate = new Date(dateFrom).getTime()
+        const fDate = new Date(`${dateFrom}T00:00:00`).getTime()
         if (pDate < fDate) return false
       }
       
       if (dateTo) {
-        const pDate = new Date(p.createdAt)
-        const tDate = new Date(dateTo)
-        // Include the end of the day for dateTo
-        tDate.setHours(23, 59, 59, 999)
-        if (pDate.getTime() > tDate.getTime()) return false
+        const pDate = new Date(p.createdAt).getTime()
+        const tDate = new Date(`${dateTo}T23:59:59.999`).getTime()
+        if (pDate > tDate) return false
       }
 
       return true
@@ -102,30 +100,14 @@ export default function AdminPaymentsPage() {
     .filter(p => p.status === "PAID")
     .reduce((sum, p) => sum + p.totalPrice, 0)
 
-  const exportToCSV = () => {
-    const headers = ["Mã HĐ", "Bệnh nhân", "Bác sĩ", "Tổng tiền", "Trạng thái", "Ngày tạo"]
-    const rows = filteredPayments.map(p => [
-      p.paymentCode,
-      p.patientName,
-      p.doctorName,
-      p.totalPrice.toString(),
-      p.status === "PAID" ? "Đã thanh toán" : p.status === "CANCELLED" ? "Đã hủy" : "Chờ thanh toán",
-      new Date(p.createdAt).toLocaleDateString("vi-VN")
-    ])
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(r => r.map(c => `"${c}"`).join(","))
-    ].join("\n")
-
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", `bao-cao-thanh-toan-${new Date().getTime()}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const handlePrint = () => {
+    const params = new URLSearchParams()
+    if (search) params.set("search", search)
+    if (dateFrom) params.set("dateFrom", dateFrom)
+    if (dateTo) params.set("dateTo", dateTo)
+    params.set("sortOrder", sortOrder)
+    
+    window.open(`/print/payments?${params.toString()}`, '_blank')
   }
 
   return (
@@ -177,11 +159,11 @@ export default function AdminPaymentsPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={exportToCSV}
+            onClick={handlePrint}
             className="gap-2 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-white shadow-sm"
           >
-            <Download className="h-4 w-4" />
-            Xuất Excel
+            <Printer className="h-4 w-4" />
+            In Báo Cáo
           </Button>
           <Button
             variant="outline"
