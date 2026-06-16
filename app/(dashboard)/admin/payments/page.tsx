@@ -275,7 +275,7 @@ export default function AdminPaymentsPage() {
       {/* Invoice detail modal */}
       <MasterModal open={viewTarget != null} onOpenChange={(open) => { if (!open) setViewTarget(null) }}>
         <MasterModalContent className="sm:max-w-lg">
-          <MasterModalHeader title={viewTarget ? `Hóa đơn #${viewTarget.id}` : ""} />
+          <MasterModalHeader title={viewTarget ? `Hóa đơn ${viewTarget.paymentCode}` : ""} />
           {viewTarget && (
             <div className="space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-4 text-sm">

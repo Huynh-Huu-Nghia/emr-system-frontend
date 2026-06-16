@@ -63,9 +63,17 @@ function mapPayment(raw: Record<string, unknown>, index: number): PaymentRecord 
     doctorName: String(raw.doctorName ?? "N/A"),
     totalPrice: Number(raw.amount ?? raw.totalPrice ?? 0),
     status: backendStatus === "CONFIRMED" ? "PAID" : backendStatus === "CANCELLED" ? "CANCELLED" : "UNPAID",
-    createdAt: String(raw.createdAt || ""),
-    paidAt: raw.paidAt ? String(raw.paidAt) : undefined,
+    createdAt: normalizeDate(String(raw.createdAt || "")),
+    paidAt: raw.paidAt ? normalizeDate(String(raw.paidAt)) : undefined,
     items: (raw.items as PaymentItem[]) || [],
     paymentCode: `HD${String(prescriptionId).padStart(3, "0")}`,
   }
+}
+
+function normalizeDate(dateStr: string): string {
+  if (!dateStr) return dateStr
+  let s = dateStr.trim()
+  if (!s.includes("T")) s = s.replace(" ", "T")
+  if (!s.endsWith("Z") && !s.includes("+")) s = s + "Z"
+  return s
 }
