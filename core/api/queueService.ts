@@ -24,12 +24,21 @@ export interface PushToQueuePayload {
   source?: "REGISTERED" | "WALK_IN"
 }
 
+export interface PushToQueuePayload {
+  patientName: string
+  medicalHistoryNumber: string
+  patientId?: number | null
+  appointmentId?: number | null
+  source?: "REGISTERED" | "WALK_IN"
+}
+
 export const queueService = {
   async getQueue(doctorId?: number | null): Promise<QueueItem[]> {
     const query = doctorId ? `?doctorId=${doctorId}` : ""
     const res = await apiFetch(`/api/queue${query}`)
     if (!res.ok) throw new Error("Failed to fetch queue")
-    return res.json()
+    const raw = await res.json()
+    return raw.map(mapQueueItem)
   },
 
   async enqueue(data: PushToQueuePayload): Promise<QueueItem> {
@@ -45,7 +54,8 @@ export const queueService = {
       }),
     })
     if (!res.ok) throw new Error("Failed to enqueue patient")
-    return res.json()
+    const raw = await res.json()
+    return mapQueueItem(raw)
   },
 
   async updatePatientId(queueId: number, patientId: number): Promise<void> {
@@ -60,17 +70,35 @@ export const queueService = {
   async call(queueId: number): Promise<QueueItem> {
     const res = await apiFetch(`/api/queue/${queueId}/call`, { method: "POST" })
     if (!res.ok) throw new Error("Failed to call queue item")
-    return res.json()
+    const raw = await res.json()
+    return mapQueueItem(raw)
   },
 
   async start(queueId: number): Promise<QueueItem> {
     const res = await apiFetch(`/api/queue/${queueId}/start`, { method: "POST" })
     if (!res.ok) throw new Error("Failed to start queue item")
-    return res.json()
+    const raw = await res.json()
+    return mapQueueItem(raw)
   },
 
   async remove(queueId: number): Promise<void> {
     const res = await apiFetch(`/api/queue/${queueId}`, { method: "DELETE" })
     if (!res.ok) throw new Error("Failed to remove from queue")
   },
+}
+
+function normalizeDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return ""
+  let s = dateStr.trim()
+  if (!s.includes("T")) s = s.replace(" ", "T")
+  if (!s.endsWith("Z") && !s.includes("+")) s = s + "Z"
+  return s
+}
+
+function mapQueueItem(item: any): QueueItem {
+  return {
+    ...item,
+    enqueuedAt: normalizeDate(item.enqueuedAt),
+    appointmentTime: item.appointmentTime ? normalizeDate(item.appointmentTime) : undefined,
+  }
 }
