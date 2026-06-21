@@ -131,7 +131,7 @@ export default function DoctorRecordsPage() {
     <Input
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
-      placeholder="Tìm theo ID, bệnh nhân, chẩn đoán, triệu chứng..."
+      placeholder="Tìm theo bệnh nhân, chẩn đoán, triệu chứng..."
       className="pl-9 rounded-xl border-slate-200 bg-white shadow-sm focus-visible:ring-1 focus-visible:ring-slate-300"
     />
   </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { dashboardService, type DashboardStats } from "@/core/api/dashboardService"
 import { LoadingBlock } from "@/shared/components/states/loading-block"
@@ -10,7 +10,7 @@ const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 }
 
-export default function PrintReportPage() {
+function PrintReportContent() {
   const searchParams = useSearchParams()
   const timeframe = searchParams.get("timeframe") || "today"
   const startDate = searchParams.get("startDate") || ""
@@ -169,8 +169,6 @@ export default function PrintReportPage() {
           <p className="font-medium italic text-sm text-slate-500 print:text-black">(Ký, đóng dấu và ghi rõ họ tên)</p>
         </div>
       </div>
-      
-      {/* Page Break for long tables if needed (handled by browser print CSS) */}
 
       {/* Tắt nút Print thủ công đi khi in */}
       <div className="mt-12 text-center print:hidden">
@@ -182,5 +180,13 @@ export default function PrintReportPage() {
         </button>
       </div>
     </div>
+  )
+}
+
+export default function PrintReportPage() {
+  return (
+    <Suspense fallback={<LoadingBlock />}>
+      <PrintReportContent />
+    </Suspense>
   )
 }
