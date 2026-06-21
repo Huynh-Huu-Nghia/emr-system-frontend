@@ -20,6 +20,14 @@ export interface MedicalRecordCreateRequest {
   treatmentPlan: string
 }
 
+function normalizeDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return ""
+  let s = dateStr.trim()
+  if (!s.includes("T")) s = s.replace(" ", "T")
+  if (!s.endsWith("Z") && !s.includes("+")) s = s + "Z"
+  return s
+}
+
 function mapMedicalRecord(raw: Record<string, unknown>): MedicalRecord {
   return {
     id: raw.id as number,
@@ -28,7 +36,7 @@ function mapMedicalRecord(raw: Record<string, unknown>): MedicalRecord {
     diagnosis: raw.diagnosis as string,
     recordType: raw.recordType as string,
     treatmentPlan: raw.treatmentPlan as string,
-    createdAt: raw.createdAt as string,
+    createdAt: normalizeDate(raw.createdAt as string),
     recordCode: `BA${String(raw.id).padStart(3, "0")}`,
     patientName: raw.patientName as string | undefined,
   }

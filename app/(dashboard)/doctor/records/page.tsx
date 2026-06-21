@@ -267,7 +267,7 @@ export default function DoctorRecordsPage() {
           />
 
           {viewTarget && (
-            <div className="space-y-4 px-6 py-5">
+            <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-slate-500">Chuyên khoa</p>
